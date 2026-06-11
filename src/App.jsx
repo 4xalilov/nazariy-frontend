@@ -3456,15 +3456,21 @@ function useTelegram() {
     tg.ready();
   }, []);
 
-  // Telegram theme ranglarini header ga qo'llash
+  // Telegram theme ranglarini header ga qo'llash + themeChanged event
   useEffect(() => {
     if (!tg) return;
-    const params = tg?.themeParams || {};
-    const btnColor = params.button_color;
-    const bgColor  = params.bg_color;
-    try { tg.setHeaderColor(btnColor || (tg?.colorScheme === "dark" ? "#1E3A5F" : "#1A6BFF")); } catch {}
-    try { tg.setBackgroundColor(bgColor || (tg?.colorScheme === "dark" ? "#0F172A" : "#F8FAFC")); } catch {}
-  }, [tg?.colorScheme, tg?.themeParams]);
+    const applyColors = () => {
+      const params = tg?.themeParams || {};
+      const btnColor = params.button_color;
+      const bgColor  = params.bg_color;
+      try { tg.setHeaderColor(btnColor || (tg?.colorScheme === "dark" ? "#1E3A5F" : "#1A6BFF")); } catch {}
+      try { tg.setBackgroundColor(bgColor || (tg?.colorScheme === "dark" ? "#0F172A" : "#F8FAFC")); } catch {}
+    };
+    applyColors();
+    // Telegram tema o'zgarganda qayta qo'llanilsin
+    tg.onEvent("themeChanged", applyColors);
+    return () => { try { tg.offEvent("themeChanged", applyColors); } catch {} };
+  }, [tg]);
 
   // Telegram foydalanuvchi ma'lumotlari
   const tgUser = tg?.initDataUnsafe?.user || null;
@@ -3598,6 +3604,18 @@ export default function App() {
 
   // Telegram mavzusiga mos holda dark mode
   const [dark, setDark] = useState(isDark);
+  const [, forceUpdate] = useState(0); // theme refresh uchun
+
+  // Telegram themeChanged eventini tinglash
+  useEffect(() => {
+    if (!tg) return;
+    const onThemeChange = () => {
+      setDark(tg.colorScheme === "dark");
+      forceUpdate(n => n + 1); // C ni qayta hisoblash
+    };
+    tg.onEvent("themeChanged", onThemeChange);
+    return () => { try { tg.offEvent("themeChanged", onThemeChange); } catch {} };
+  }, [tg]);
   const [lang, setLang] = useState("uz");
   const [notifs, setNotifs] = useState(INIT_NOTIFS);
   const [notifSettings, setNotifSettings] = useState({ daily: true, result: true, new: true, exam: true });
