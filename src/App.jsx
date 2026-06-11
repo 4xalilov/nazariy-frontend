@@ -256,23 +256,66 @@ const LANGS = {
 
 // ─── THEMES ───
 function getTheme(dark) {
-  return dark ? {
-    primary:"#3B82F6", primaryDark:"#2563EB",
-    success:"#22C55E", danger:"#EF4444", warning:"#F59E0B",
-    bg:"#0F172A", white:"#1E293B", card:"#1E293B", cardBorder:"#334155",
-    gray100:"#1E293B", gray200:"#334155", gray300:"#475569",
-    gray400:"#64748B", gray600:"#94A3B8", gray800:"#F1F5F9",
-    text:"#F1F5F9", subtext:"#94A3B8", navBg:"#1E293B", inputBg:"#0F172A",
-    gradStart:"#1E3A5F", gradEnd:"#1E40AF",
-  } : {
-    primary:"#1A6BFF", primaryDark:"#1250CC",
-    success:"#22C55E", danger:"#EF4444", warning:"#F59E0B",
-    bg:"#F0F4FF", white:"#FFFFFF", card:"#FFFFFF", cardBorder:"transparent",
-    gray100:"#F8FAFC", gray200:"#E2E8F0", gray300:"#CBD5E1",
-    gray400:"#94A3B8", gray600:"#64748B", gray800:"#1E293B",
-    text:"#1E293B", subtext:"#64748B", navBg:"#FFFFFF", inputBg:"#F8FAFC",
-    gradStart:"#1A6BFF", gradEnd:"#3B82F6",
-  };
+  // Telegram theme params — foydalanuvchi Telegram ranglaridan olamiz
+  const tgParams = typeof window !== "undefined"
+    ? window?.Telegram?.WebApp?.themeParams || {}
+    : {};
+
+  // Telegram bergan ranglar (bo'lmasa fallback)
+  const tgBg       = tgParams.bg_color;
+  const tgCard     = tgParams.secondary_bg_color;
+  const tgText     = tgParams.text_color;
+  const tgHint     = tgParams.hint_color;
+  const tgLink     = tgParams.link_color;
+  const tgButton   = tgParams.button_color;
+  const tgNavBg    = tgParams.bottom_bar_bg_color || tgParams.secondary_bg_color;
+
+  if (dark) {
+    return {
+      primary:    tgButton  || "#3B82F6",
+      primaryDark:"#2563EB",
+      success:"#22C55E", danger:"#EF4444", warning:"#F59E0B",
+      bg:         tgBg      || "#0F172A",
+      white:      tgCard    || "#1E293B",
+      card:       tgCard    || "#1E293B",
+      cardBorder: tgHint    ? tgHint+"33" : "#334155",
+      gray100:    tgCard    || "#1E293B",
+      gray200:"#334155", gray300:"#475569",
+      gray400:"#64748B",
+      gray600:    tgHint    || "#94A3B8",
+      gray800:"#F1F5F9",
+      text:       tgText    || "#F1F5F9",
+      subtext:    tgHint    || "#94A3B8",
+      muted:      tgHint    || "#64748B",
+      navBg:      tgNavBg   || "#1E293B",
+      inputBg:    tgBg      || "#0F172A",
+      gradStart:  tgButton  ? tgButton+"CC" : "#1E3A5F",
+      gradEnd:    tgButton  || "#1E40AF",
+      primary_light: (tgButton||"#3B82F6")+"22",
+    };
+  } else {
+    return {
+      primary:    tgButton  || "#1A6BFF",
+      primaryDark:"#1250CC",
+      success:"#22C55E", danger:"#EF4444", warning:"#F59E0B",
+      bg:         tgBg      || "#F0F4FF",
+      white:      "#FFFFFF",
+      card:       tgCard    || "#FFFFFF",
+      cardBorder: tgHint    ? tgHint+"22" : "transparent",
+      gray100:"#F8FAFC", gray200:"#E2E8F0", gray300:"#CBD5E1",
+      gray400:"#94A3B8",
+      gray600:    tgHint    || "#64748B",
+      gray800:"#1E293B",
+      text:       tgText    || "#1E293B",
+      subtext:    tgHint    || "#64748B",
+      muted:      tgHint    || "#94A3B8",
+      navBg:      tgNavBg   || "#FFFFFF",
+      inputBg:    tgCard    || "#F8FAFC",
+      gradStart:  tgButton  || "#1A6BFF",
+      gradEnd:    tgLink    || "#3B82F6",
+      primary_light: (tgButton||"#1A6BFF")+"18",
+    };
+  }
 }
 
 // ─── SVG ICONS ───
@@ -3409,13 +3452,19 @@ function useTelegram() {
 
   useEffect(() => {
     if (!tg) return;
-    // To'liq ekranga kengaytir
     tg.expand();
-    // Telegram navigatsiya rangini o'rnatish
-    tg.setHeaderColor("#1A6BFF");
-    // Ready signal berish
     tg.ready();
   }, []);
+
+  // Telegram theme ranglarini header ga qo'llash
+  useEffect(() => {
+    if (!tg) return;
+    const params = tg?.themeParams || {};
+    const btnColor = params.button_color;
+    const bgColor  = params.bg_color;
+    try { tg.setHeaderColor(btnColor || (tg?.colorScheme === "dark" ? "#1E3A5F" : "#1A6BFF")); } catch {}
+    try { tg.setBackgroundColor(bgColor || (tg?.colorScheme === "dark" ? "#0F172A" : "#F8FAFC")); } catch {}
+  }, [tg?.colorScheme, tg?.themeParams]);
 
   // Telegram foydalanuvchi ma'lumotlari
   const tgUser = tg?.initDataUnsafe?.user || null;
