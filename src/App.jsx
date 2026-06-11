@@ -3480,7 +3480,7 @@ function useTelegram() {
 
 // ─── APP ───
 export default function App() {
-  const { tg, tgUser, isDark, showBackButton, hideBackButton, haptic, safeTop } = useTelegram();
+  const { tg, tgUser, isDark, showBackButton, hideBackButton, haptic, safeTop, loginToBackend } = useTelegram();
 
   const [screen, setScreenRaw] = useState("home");
   const [prevScreen, setPrevScreen] = useState("home");
