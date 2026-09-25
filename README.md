@@ -18,3 +18,7 @@ npm run lint
   `/me/saved`, `/referrals/me`, `/payments/*` (karta cheki + Telegram Stars).
 - `VITE_API_URL` berilmasa yoki so'rov xato bersa — ilova offline (demo) rejimda mock ma'lumotlar bilan ishlaydi.
 - `src/App.jsx` → `APP_CONFIG`: support, yangiliklar kanali va bot username'lari.
+
+## Android (Play Market)
+Capacitor bilan: `android/`. Build — GitHub Actions (`.github/workflows/android.yml`), qo'llanma — [docs/ANDROID.md](docs/ANDROID.md).
+Store materiallari: `store/`.
