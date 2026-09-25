@@ -12,5 +12,9 @@ npm run lint
 ```
 
 ## Sozlamalar
-- `VITE_API_URL` — backend manzili (`/auth/telegram`). Berilmasa ilova offline rejimda ishlaydi.
+- `VITE_API_URL` — IQuest backend manzili (`cp .env.example .env.local`). Kontrakt: IQuest `docs/API.md`.
+  Telegram ichida ochilganda `POST /auth/telegram` orqali token olinadi; brauzerda referal kodi `?ref=CODE` bilan beriladi.
+  Token bo'lsa ekranlar real ma'lumotdan foydalanadi: `/me`, `/results`, `/stats/me`, `/leaderboard`, `/notifications`,
+  `/me/saved`, `/referrals/me`, `/payments/*` (karta cheki + Telegram Stars).
+- `VITE_API_URL` berilmasa yoki so'rov xato bersa — ilova offline (demo) rejimda mock ma'lumotlar bilan ishlaydi.
 - `src/App.jsx` → `APP_CONFIG`: support, yangiliklar kanali va bot username'lari.

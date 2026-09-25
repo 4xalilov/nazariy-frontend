@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 
 // ─── TRANSLATIONS ───
 const LANGS = {
@@ -77,6 +77,7 @@ const LANGS = {
     notifSettings:"Bildirishnoma sozlamalari",
     notifDaily:"Kunlik eslatma", notifResult:"Natija haqida",
     notifNew:"Yangi to'plam", notifExam:"Test eslatmasi",
+    notifPayment:"To'lov tasdiqlandi", paymentRejected:"To'lov rad etildi",
     notifOn:"Yoqilgan", notifOff:"O'chirilgan",
     justNow:"Hozir", minsAgo:"daqiqa oldin", hoursAgo:"soat oldin",
     savedQ:"Saqlanganlar", savedEmpty:"Hali saqlanganlar yo'q",
@@ -158,6 +159,7 @@ const LANGS = {
     notifSettings:"Настройки уведомлений",
     notifDaily:"Ежедневное напоминание", notifResult:"О результатах",
     notifNew:"Новый набор", notifExam:"Напоминание о тесте",
+    notifPayment:"Оплата подтверждена", paymentRejected:"Оплата отклонена", referral:"Рефералы",
     notifOn:"Включено", notifOff:"Выключено",
     justNow:"Только что", minsAgo:"мин. назад", hoursAgo:"ч. назад",
     savedQ:"Сохранённые", savedEmpty:"Нет сохранённых вопросов",
@@ -239,6 +241,7 @@ const LANGS = {
     notifSettings:"Билдиришнома созламалари",
     notifDaily:"Кунлик эслатма", notifResult:"Натижа ҳақида",
     notifNew:"Янги тўплам", notifExam:"Тест эслатмаси",
+    notifPayment:"Тўлов тасдиқланди", paymentRejected:"Тўлов рад этилди", referral:"Реферал",
     notifOn:"Ёқилган", notifOff:"Ўчирилган",
     justNow:"Ҳозир", minsAgo:"дақиқа олдин", hoursAgo:"соат олдин",
     savedQ:"Сақланганлар", savedEmpty:"Ҳали сақланган савол йўқ",
@@ -404,29 +407,79 @@ const LIMITS = {
 // IQuest backend manzili .env orqali beriladi (VITE_API_URL). Bo'sh bo'lsa — offline rejim.
 const API_URL = import.meta.env.VITE_API_URL || "";
 
-// API helper funksiyalar
-async function apiGet(endpoint, token) {
+// API helper funksiyalar — xato bo'lsa Error (err.status, err.code = backend `error` kodi)
+async function apiRequest(method, endpoint, data, token, isForm = false) {
+  const headers = {};
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  if (data !== undefined && !isForm) headers['Content-Type'] = 'application/json';
   const res = await fetch(API_URL + endpoint, {
-    headers: {
-      'Authorization': token ? `Bearer ${token}` : '',
-      'Content-Type': 'application/json',
-    }
+    method, headers,
+    body: data === undefined ? undefined : isForm ? data : JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+  const text = await res.text();
+  let json;
+  try { json = text ? JSON.parse(text) : null; } catch { json = null; }
+  if (!res.ok) {
+    const err = new Error(json?.message || json?.error || text || `HTTP ${res.status}`);
+    err.status = res.status; err.code = json?.error;
+    throw err;
+  }
+  return json;
+}
+const apiGet    = (endpoint, token)       => apiRequest('GET', endpoint, undefined, token);
+const apiPost   = (endpoint, data, token) => apiRequest('POST', endpoint, data ?? {}, token);
+const apiPut    = (endpoint, data, token) => apiRequest('PUT', endpoint, data ?? {}, token);
+const apiPatch  = (endpoint, data, token) => apiRequest('PATCH', endpoint, data ?? {}, token);
+const apiDelete = (endpoint, token)       => apiRequest('DELETE', endpoint, undefined, token);
+// multipart (FormData) yuklash — Content-Type ni brauzer o'zi qo'yadi (boundary bilan)
+const apiUpload = (endpoint, formData, token) => apiRequest('POST', endpoint, formData, token, true);
+
+// Token bilan bog'langan API obyekt. Offline (API_URL yo'q yoki token yo'q) bo'lsa — null.
+// Ekranlar: `api ? real ma'lumot : mock` — shu bilan offline (demo) rejim buzilmaydi.
+function makeApi(token) {
+  if (!API_URL || !token) return null;
+  return {
+    get:    (e)    => apiGet(e, token),
+    post:   (e, d) => apiPost(e, d, token),
+    put:    (e, d) => apiPut(e, d, token),
+    patch:  (e, d) => apiPatch(e, d, token),
+    del:    (e)    => apiDelete(e, token),
+    upload: (e, f) => apiUpload(e, f, token),
+  };
 }
 
-async function apiPost(endpoint, data, token) {
-  const res = await fetch(API_URL + endpoint, {
-    method: 'POST',
-    headers: {
-      'Authorization': token ? `Bearer ${token}` : '',
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(data),
-  });
-  if (!res.ok) throw new Error(await res.text());
-  return res.json();
+// Backend user DTO → frontend user obyekti (mavjud maydonlar saqlanadi)
+function mapApiUser(u, prev = {}) {
+  if (!u) return prev;
+  return {
+    ...prev,
+    id: u.id,
+    tgId: u.tgId,
+    name: u.firstName || prev.name,
+    surname: u.lastName ?? prev.surname,
+    phone: u.phone ?? prev.phone ?? "",
+    username: u.username || prev.username,
+    photo: u.photoUrl || prev.photo || null,
+    isPro: !!u.isPro,
+    proExpiresAt: u.proExpiresAt,
+    referralCode: u.referralCode,
+    xp: u.xp,
+  };
+}
+
+// Backend sozlamalari (toPublicSettings shakli) → LIMITS / DISCOUNT / REFERRAL_CONFIG
+function applyApiSettings(s) {
+  if (!s) return;
+  if (s.daily_test_limit) LIMITS.dailyTestLimit = s.daily_test_limit.value;
+  if (s.free_exam_count) LIMITS.freeExamCount = s.free_exam_count.value;
+  if (s.free_ticket_count) LIMITS.freeTicketCount = s.free_ticket_count.value;
+  if (s.discount) Object.assign(DISCOUNT, s.discount);
+  if (Array.isArray(s.referral_milestones) && s.referral_milestones.length) {
+    REFERRAL_CONFIG.milestones = s.referral_milestones.map(m => ({ count: m.count, days: m.days, label: proDaysLabel(m.days) }));
+  }
+}
+function proDaysLabel(days) {
+  return days === 7 ? "Haftalik Pro" : days === 30 ? "1 oylik Pro" : days === 60 ? "2 oylik Pro" : `${days} kunlik Pro`;
 }
 
 // ─── APP KONFIGURATSIYASI (admin tomonidan boshqariladi) ───
@@ -596,7 +649,7 @@ function getOpts(q,lang) {
   return Array.isArray(it.opts)?it.opts:(it.opts[lang]||it.opts.uz);
 }
 
-const leaderboard=[{rank:1,name:"Jasur",xp:1850,av:"J"},{rank:2,name:"Alisher",xp:2460,av:"A",me:true},{rank:3,name:"Sardor",xp:1750,av:"S"},{rank:4,name:"Behzod",xp:1640,av:"B"},{rank:5,name:"Sanjar",xp:1500,av:"SA"},{rank:6,name:"Bobur",xp:1400,av:"BO"}];
+const LEADERBOARD_DEMO=[{rank:1,name:"Jasur",xp:1850,av:"J"},{rank:2,name:"Alisher",xp:2460,av:"A",me:true},{rank:3,name:"Sardor",xp:1750,av:"S"},{rank:4,name:"Behzod",xp:1640,av:"B"},{rank:5,name:"Sanjar",xp:1500,av:"SA"},{rank:6,name:"Bobur",xp:1400,av:"BO"}];
 
 // ─── UI COMPONENTS ───
 function BottomNav({screen,setScreen,T,C}) {
@@ -1086,9 +1139,17 @@ function RegisterScreen({setScreen,setUser,T,C}) {
   );
 }
 
-function HomeScreen({setScreen,user,T,C,unreadCount,savedQuestions,dark,setDark,lang,setLang}) {
+function HomeScreen({setScreen,T,C,unreadCount,savedQuestions,dark,setDark,lang,setLang,api,usage}) {
   const [showLang,setShowLang]=useState(false);
   const [searchQuery,setSearchQuery]=useState("");
+  // Online: umumiy statistika (to'g'ri foizi) va reytingdagi o'rin
+  const [homeStats,setHomeStats]=useState(null);
+  const [myRank,setMyRank]=useState(null);
+  useEffect(()=>{
+    if(!api) return;
+    api.get('/stats/me?period=all').then(setHomeStats).catch(()=>{});
+    api.get('/leaderboard?period=all&limit=1').then(r=>setMyRank(r?.me?.rank??null)).catch(()=>{});
+  },[api]);
 
   const menuItems=[
     {lk:"tickets", Icon:IC.Grid,         sc:"tickets", accent:"#4F3FD0", light:"#ECEAFB"},
@@ -1098,6 +1159,10 @@ function HomeScreen({setScreen,user,T,C,unreadCount,savedQuestions,dark,setDark,
     {lk:"rating",  Icon:IC.Medal,        sc:"rating",  accent:"#F59E0B", light:"#FEF3C7"},
     {lk:"rules",   Icon:IC.Lightbulb,       sc:"rules",   accent:"#EC4899", light:"#FCE7F3"},
   ];
+
+  // Bugungi maqsad: online — bugungi mashq savollari / kunlik limit; offline — demo
+  const goal=api&&usage?{done:usage.practiceQuestions||0,total:LIMITS.dailyTestLimit}:{done:120,total:150};
+  goal.pct=Math.min(100,Math.round(goal.done/Math.max(1,goal.total)*100));
 
   const activities=[
     {Icon:IC.Ticket,    label:`${T.ticket} 12`, score:"18/20", p:90,  color:"#4F3FD0"},
@@ -1198,8 +1263,8 @@ function HomeScreen({setScreen,user,T,C,unreadCount,savedQuestions,dark,setDark,
         <div style={{display:"flex",gap:10,marginTop:14}}>
           {[
             {label:T.active,  val:"92%", color:"#4F3FD0", bg:dark?"#26224A22":"#ECEAFB"},
-            {label:T.tests,   val:"85%", color:"#22C55E", bg:dark?"#16653622":"#DCFCE7"},
-            {label:T.rating,  val:"#24", color:"#F59E0B", bg:dark?"#78350f22":"#FEF3C7"},
+            {label:T.tests,   val:api&&homeStats?`${homeStats.correctPct??0}%`:"85%", color:"#22C55E", bg:dark?"#16653622":"#DCFCE7"},
+            {label:T.rating,  val:api&&myRank?`#${myRank}`:api&&homeStats?"—":"#24", color:"#F59E0B", bg:dark?"#78350f22":"#FEF3C7"},
           ].map(s=>(
             <div key={s.label} style={{flex:1,background:s.bg,borderRadius:16,padding:"12px 10px",textAlign:"center"}}>
               <div style={{fontSize:20,fontWeight:900,color:s.color}}>{s.val}</div>
@@ -1216,14 +1281,14 @@ function HomeScreen({setScreen,user,T,C,unreadCount,savedQuestions,dark,setDark,
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",position:"relative"}}>
             <div>
               <div style={{color:"rgba(255,255,255,0.75)",fontSize:12,fontWeight:500,marginBottom:4}}>{T.todayGoal}</div>
-              <div style={{color:"white",fontSize:22,fontWeight:900}}>120 <span style={{fontSize:14,fontWeight:500,opacity:0.7}}>/ 150 {T.questions}</span></div>
+              <div style={{color:"white",fontSize:22,fontWeight:900}}>{goal.done} <span style={{fontSize:14,fontWeight:500,opacity:0.7}}>/ {goal.total} {T.questions}</span></div>
             </div>
             <div style={{background:"rgba(255,255,255,0.15)",borderRadius:12,padding:"6px 12px"}}>
-              <span style={{color:"white",fontSize:14,fontWeight:800}}>80%</span>
+              <span style={{color:"white",fontSize:14,fontWeight:800}}>{goal.pct}%</span>
             </div>
           </div>
           <div style={{marginTop:14,height:6,background:"rgba(255,255,255,0.2)",borderRadius:100}}>
-            <div style={{height:"100%",width:"80%",background:"white",borderRadius:100,boxShadow:"0 0 8px rgba(255,255,255,0.5)"}}/>
+            <div style={{height:"100%",width:`${goal.pct}%`,background:"white",borderRadius:100,boxShadow:"0 0 8px rgba(255,255,255,0.5)"}}/>
           </div>
         </div>
       </div>
@@ -1279,11 +1344,17 @@ function HomeScreen({setScreen,user,T,C,unreadCount,savedQuestions,dark,setDark,
   );
 }
 
-function TicketsScreen({setScreen,setActiveTicket,T,C,user}) {
+function TicketsScreen({setScreen,setActiveTicket,T,C,user,api}) {
   const [tab,setTab]=useState("all");
-  const isPro = user?.pro || false;
+  const isPro = user?.isPro || user?.pro || false;
+  // Online: GET /results/sets → { setId: best% }; offline — demo progress
+  const [setsBest,setSetsBest]=useState(null);
+  useEffect(()=>{
+    if(!api) return;
+    api.get('/results/sets').then(r=>setSetsBest(Object.fromEntries((r?.items||[]).map(it=>[it.setId,it.best])))).catch(()=>{});
+  },[api]);
   const pm=[95,90,80,100,75,null,null,null,null,null,88,null,null,null,null,null,null,null,null,null];
-  const list=tickets.slice(0,20).map((t,i)=>({...t,progress:pm[i]}));
+  const list=tickets.slice(0,20).map((t,i)=>({...t,isPro:t.id>LIMITS.freeTicketCount,progress:api&&setsBest?(setsBest[t.id]??null):pm[i]}));
   const filtered=list.filter(t=>tab==="all"?true:tab==="done"?t.progress!==null:t.progress===null);
 
   const handleTicketClick = (ticket) => {
@@ -1359,7 +1430,8 @@ function OptionsList({options,correct,selected,onSelect,C,neutral=false}) {
   })}</>;
 }
 
-function TicketQuizScreen({setScreen,ticket,setLastResult,T,C,lang,savedQuestions,setSavedQuestions,addToast}) {
+function TicketQuizScreen({setScreen,ticket,setLastResult,T,C,lang,savedQuestions,setSavedQuestions,addToast,postResult}) {
+  const [startedAt]=useState(()=>Date.now());
   const [current,setCurrent]=useState(0);
   const [answers,setAnswers]=useState({});
   const [selected,setSelected]=useState(null);
@@ -1395,7 +1467,7 @@ function TicketQuizScreen({setScreen,ticket,setLastResult,T,C,lang,savedQuestion
 
   const goNext=()=>{
     if(current+1<total){setCurrent(current+1);setSelected(answers[current+1]??null);setAnswered(answers[current+1]!==undefined);}
-    else{const na={...answers};const c=Object.values(na).filter((v,i)=>v===ticket.questions[i]?.correct).length;setLastResult({ticket,correct:c,total,wrong:total-c});setScreen("ticket-result");}
+    else{const na={...answers};const c=Object.values(na).filter((v,i)=>v===ticket.questions[i]?.correct).length;setLastResult({ticket,correct:c,total,wrong:total-c});postResult?.({kind:'set',setId:ticket.id,correct:c,total,durationSec:Math.round((Date.now()-startedAt)/1000)});setScreen("ticket-result");}
   };
 
   const goBack=()=>{
@@ -1512,11 +1584,25 @@ function PracticeResultScreen({setScreen,result,T,C}) {
   return <ResultScreen T={T} C={C} icon={percent>=60?"pass":"fail"} title={percent>=60?T.greatResult:T.keepPracticing} subtitle={T.infiniteTest} correct={correct} wrong={wrong} total={total} percent={percent} actions={[{label:T.startTest,onClick:()=>setScreen("test-quiz")},{label:T.goHome,onClick:()=>setScreen("home")}]}/>;
 }
 
-function TestsScreen({setScreen,T,C,user}) {
-  const isPro = user?.pro || false;
-  const usedToday = getDailyCount('tests');
-  const remaining = Math.max(0, LIMITS.dailyTestLimit - usedToday);
-  const limitReached = !isPro && remaining === 0;
+function TestsScreen({setScreen,T,C,user,api,addToast}) {
+  // Online: POST /results/practice/check → { allowed, used, limit } (lokal hisoblagich o'rniga)
+  const [check,setCheck]=useState(null);
+  useEffect(()=>{
+    if(!api) return;
+    api.post('/results/practice/check').then(setCheck).catch(()=>{});
+  },[api]);
+  const online = !!(api && check);
+  const isPro = online ? check.limit === null : (user?.isPro || user?.pro || false);
+  const dailyLimit = online && check.limit !== null ? check.limit : LIMITS.dailyTestLimit;
+  const usedToday = online ? check.used : getDailyCount('tests');
+  const remaining = Math.max(0, dailyLimit - usedToday);
+  const limitReached = online ? !check.allowed : (!isPro && remaining === 0);
+  const startPractice = () => {
+    if(!api){ if(limitReached){setScreen("test-limit-gate");return;} setScreen("test-quiz"); return; }
+    // Boshlashdan oldin serverdan qayta tekshiramiz; tarmoq xatosida lokal hisobga tayanamiz
+    api.post('/results/practice/check').then(r=>{ setCheck(r); setScreen(r.allowed?"test-quiz":"test-limit-gate"); })
+      .catch(()=>{ addToast?.("Server bilan aloqa yo'q","error"); setScreen(limitReached?"test-limit-gate":"test-quiz"); });
+  };
   return <div style={{paddingBottom:80}}>
     <div style={{background:`linear-gradient(135deg,${C.gradStart},${C.gradEnd})`,padding:"52px 20px 24px"}}>
       <h2 style={{color:"white",fontSize:22,fontWeight:800,margin:0}}>{T.tests}</h2>
@@ -1542,9 +1628,9 @@ function TestsScreen({setScreen,T,C,user}) {
     {/* Sticky bottom button */}
     <div style={{position:"fixed",bottom:70,left:16,right:16,width:"calc(100% - 32px)",padding:"0 0 8px",zIndex:50}}>
       {!isPro && <div style={{textAlign:"center",marginBottom:8,fontSize:12,color:remaining<20?C.danger:C.subtext}}>
-        Bugun qolgan: <strong style={{color:remaining<20?C.danger:C.primary}}>{remaining}/{LIMITS.dailyTestLimit}</strong> ta bepul test
+        Bugun qolgan: <strong style={{color:remaining<20?C.danger:C.primary}}>{remaining}/{dailyLimit}</strong> ta bepul test
       </div>}
-      <button onClick={()=>{ if(limitReached){setScreen("test-limit-gate");return;} setScreen("test-quiz"); }}
+      <button onClick={startPractice}
         style={{width:"100%",padding:"16px",borderRadius:16,border:"none",background:limitReached?"#E2E8F0":`linear-gradient(135deg,${C.gradStart},${C.gradEnd})`,color:limitReached?C.muted:"white",fontSize:16,fontWeight:800,cursor:"pointer",boxShadow:limitReached?"none":`0 6px 20px ${C.primary}50`}}>
         {limitReached ? <span style={{display:"flex",alignItems:"center",gap:6,justifyContent:"center"}}><IC.Lock size={16} color={C.muted}/>Kunlik limit tugadi</span> : T.startTest}
       </button>
@@ -1552,7 +1638,7 @@ function TestsScreen({setScreen,T,C,user}) {
   </div>;
 }
 
-function TestQuizScreen({setScreen,setLastTestResult,T,C,lang,savedQuestions,setSavedQuestions}) {
+function TestQuizScreen({setScreen,setLastTestResult,T,C,lang,savedQuestions,setSavedQuestions,postResult}) {
   const allQs=tickets.slice(0,5).flatMap(t=>t.questions.slice(0,5));
   const [questions]=useState(()=>allQs.sort(()=>Math.random()-0.5).slice(0,12));
   const [current,setCurrent]=useState(0);
@@ -1573,7 +1659,7 @@ function TestQuizScreen({setScreen,setLastTestResult,T,C,lang,savedQuestions,set
   };
   const goNext=()=>{
     if(current+1<questions.length){setCurrent(current+1);setSelected(answers[current+1]??null);setAnswered(answers[current+1]!==undefined);}
-    else{const na={...answers};const c=Object.values(na).filter((v,i)=>v===questions[i]?.correct).length;setLastTestResult({correct:c,total:questions.length,wrong:questions.length-c});setScreen("test-result");}
+    else{const na={...answers};const c=Object.values(na).filter((v,i)=>v===questions[i]?.correct).length;setLastTestResult({correct:c,total:questions.length,wrong:questions.length-c});postResult?.({kind:'practice',correct:c,total:questions.length,durationSec:600-timeLeft});setScreen("test-result");}
   };
   const goBack=()=>{if(current>0){setCurrent(current-1);setSelected(answers[current-1]??null);setAnswered(answers[current-1]!==undefined);}};
   const explanation=q?.explanation;
@@ -1647,7 +1733,7 @@ function TestQuizScreen({setScreen,setLastTestResult,T,C,lang,savedQuestions,set
 }
 
 function ExamScreen({setScreen,T,C,user}) {
-  const isPro = user?.pro || false;
+  const isPro = user?.isPro || user?.pro || false;
   const usedExams = getDailyCount('exams');
   const examRemaining = Math.max(0, LIMITS.freeExamCount - usedExams);
   const examLimitReached = !isPro && examRemaining === 0;
@@ -1682,7 +1768,9 @@ function ExamScreen({setScreen,T,C,user}) {
 }
 
 function ExamQuizScreen({setScreen,setExamResult,T,C,lang,user}) {
-  const isPro = user?.pro || false;
+  // Eslatma: IQ test lokal 20 savollik test — backenddagi /iq/sessions (engine formasi) bilan mos emas,
+  // shuning uchun natija serverga yozilmaydi (kontrakt qarori kerak)
+  const isPro = user?.isPro || user?.pro || false;
   // Pro to'plamlar jumboqlarini bepul IQ testga kiritmaymiz
   const allQs = tickets
     .filter(t => !t.isPro || isPro)
@@ -1762,12 +1850,23 @@ function ExamResultScreen({setScreen,result,T,C}) {
   </div>;
 }
 
-function StatsScreen({T,C}) {
-  const graph=[60,70,55,75,80,72,85];
-  const months=["01.05","02.05","03.05","04.05","05.05","06.05","07.05"];
+const STATS_PERIODS=["all","week","month","year"]; // Umumiy/Haftalik/Oylik/Yillik
+function StatsScreen({T,C,api}) {
   const tabs=[T.general,T.weekly,T.monthly,T.yearly];
   const [tab,setTab]=useState(0);
-  const sCards=[{lk:"totalQ",val:"2450",c:C.primary,bg:C.primary+"22",Icon:IC.FileText},{lk:"correctA",val:"1980",c:C.success,bg:"#DCFCE7",Icon:IC.CheckCircle},{lk:"wrongA",val:"470",c:C.danger,bg:"#FEE2E2",Icon:IC.XCircle},{lk:"correctPct",val:"81%",c:C.warning,bg:C.warning+"22",Icon:IC.TrendingUp}];
+  // Online: GET /stats/me?period=... (tab bo'yicha); offline — demo raqamlar
+  const [remote,setRemote]=useState(null);
+  useEffect(()=>{
+    if(!api) return;
+    let alive=true;
+    api.get(`/stats/me?period=${STATS_PERIODS[tab]}`).then(r=>{if(alive)setRemote({tab,data:r});}).catch(()=>{if(alive)setRemote(null);});
+    return()=>{alive=false;};
+  },[api,tab]);
+  const st=api&&remote?.tab===tab?remote.data:null;
+  const graph=st?(st.graph||[]).map(g=>g.pct):[60,70,55,75,80,72,85];
+  const months=st?(st.graph||[]).map(g=>g.date.slice(8,10)+"."+g.date.slice(5,7)):["01.05","02.05","03.05","04.05","05.05","06.05","07.05"];
+  const gx=i=>graph.length>1?Math.round(i*318/(graph.length-1)):160;
+  const sCards=[{lk:"totalQ",val:st?String(st.totalQuestions):"2450",c:C.primary,bg:C.primary+"22",Icon:IC.FileText},{lk:"correctA",val:st?String(st.correct):"1980",c:C.success,bg:"#DCFCE7",Icon:IC.CheckCircle},{lk:"wrongA",val:st?String(st.wrong):"470",c:C.danger,bg:"#FEE2E2",Icon:IC.XCircle},{lk:"correctPct",val:st?`${st.correctPct}%`:"81%",c:C.warning,bg:C.warning+"22",Icon:IC.TrendingUp}];
   return <div style={{paddingBottom:16}}>
     <div style={{padding:"52px 20px 20px"}}><h2 style={{fontSize:22,fontWeight:800,color:C.text,margin:0}}>{T.statistics}</h2></div>
     <div style={{padding:"0 16px"}}>
@@ -1780,24 +1879,36 @@ function StatsScreen({T,C}) {
         <svg width="100%" height="120" viewBox="0 0 320 120">
           <defs><linearGradient id="gg" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stopColor={C.primary} stopOpacity="0.25"/><stop offset="100%" stopColor={C.primary} stopOpacity="0"/></linearGradient></defs>
           {[0,25,50,75,100].map(v=><line key={v} x1="0" y1={100-v} x2="320" y2={100-v} stroke={C.gray200} strokeWidth="1" strokeDasharray="4,4"/>)}
-          <polyline points={graph.map((v,i)=>`${i*53},${110-v}`).join(" ")} fill="none" stroke={C.primary} strokeWidth="2.5" strokeLinejoin="round"/>
-          <polygon points={`0,110 ${graph.map((v,i)=>`${i*53},${110-v}`).join(" ")} ${6*53},110`} fill="url(#gg)"/>
-          {graph.map((v,i)=><circle key={i} cx={i*53} cy={110-v} r="5" fill={C.primary} stroke={C.card} strokeWidth="2"/>)}
+          {graph.length>1&&<polyline points={graph.map((v,i)=>`${gx(i)},${110-v}`).join(" ")} fill="none" stroke={C.primary} strokeWidth="2.5" strokeLinejoin="round"/>}
+          {graph.length>1&&<polygon points={`0,110 ${graph.map((v,i)=>`${gx(i)},${110-v}`).join(" ")} ${gx(graph.length-1)},110`} fill="url(#gg)"/>}
+          {graph.map((v,i)=><circle key={i} cx={gx(i)} cy={110-v} r="5" fill={C.primary} stroke={C.card} strokeWidth="2"/>)}
         </svg>
-        <div style={{display:"flex",justifyContent:"space-between",marginTop:4}}>{months.map(m=><span key={m} style={{fontSize:10,color:C.gray400}}>{m}</span>)}</div>
+        <div style={{display:"flex",justifyContent:graph.length>1?"space-between":"center",marginTop:4}}>{months.map(m=><span key={m} style={{fontSize:10,color:C.gray400}}>{m}</span>)}</div>
       </Card>
     </div>
   </div>;
 }
 
-function RatingScreen({T,C}) {
+const RATING_PERIODS=["day","week","month","all"];
+function RatingScreen({T,C,api}) {
   const [tab,setTab]=useState(1);const gold=["#C0C0C0","#FFD700","#CD7F32"];const po=[0,1,2];const hs=[85,110,70];
+  // Online: GET /leaderboard?period=day|week|month|all; offline — demo ro'yxat
+  const [remote,setRemote]=useState(null);
+  useEffect(()=>{
+    if(!api) return;
+    let alive=true;
+    api.get(`/leaderboard?period=${RATING_PERIODS[tab]}&limit=50`).then(r=>{if(alive)setRemote({tab,data:r});}).catch(()=>{if(alive)setRemote(null);});
+    return()=>{alive=false;};
+  },[api,tab]);
+  const lb=api&&remote?.tab===tab?remote.data:null;
+  const leaderboard=lb?(lb.items||[]).map(u=>({rank:u.rank,name:u.name,xp:u.xp,av:u.avatar,me:u.isMe})):LEADERBOARD_DEMO;
+  const meOutside=lb?.me&&!leaderboard.some(u=>u.me)?lb.me:null;
   return <div style={{paddingBottom:16}}>
     <div style={{padding:"52px 20px 16px"}}><h2 style={{fontSize:22,fontWeight:800,color:C.text,margin:0,display:"flex",alignItems:"center",gap:8}}><IC.Medal size={24} color={C.warning}/>{T.ratingTitle}</h2></div>
     <div style={{padding:"0 16px"}}>
       <div style={{display:"flex",gap:8,marginBottom:20}}>{[T.daily,T.weekly,T.monthly,T.allTab].map((t,i)=><button key={t} onClick={()=>setTab(i)} style={{padding:"7px 14px",borderRadius:20,border:"none",cursor:"pointer",background:tab===i?C.primary:C.gray200,color:tab===i?"white":C.subtext,fontSize:13,fontWeight:600}}>{t}</button>)}</div>
       <div style={{display:"flex",justifyContent:"center",alignItems:"flex-end",gap:10,marginBottom:24}}>
-        {po.map((pi,i)=>{const u=leaderboard[pi];return <div key={i} style={{textAlign:"center",flex:1}}>
+        {po.map((pi,i)=>{const u=leaderboard[pi];if(!u)return <div key={i} style={{flex:1}}/>;return <div key={i} style={{textAlign:"center",flex:1}}>
           <div style={{width:52,height:52,borderRadius:"50%",background:u.me?`linear-gradient(135deg,${C.primary},#9C90FF)`:`linear-gradient(135deg,${gold[i]},rgba(255,255,255,0.5))`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 6px",fontWeight:800,fontSize:18,color:"white",boxShadow:u.me?`0 4px 16px ${C.primary}66`:"0 2px 8px rgba(0,0,0,0.1)"}}>{u.av}</div>
           <div style={{fontSize:13,fontWeight:700,color:C.text}}>{u.name}</div>
           <div style={{fontSize:12,color:C.primary,fontWeight:600}}>{u.xp} xp</div>
@@ -1810,6 +1921,11 @@ function RatingScreen({T,C}) {
         <div style={{flex:1}}><div style={{fontWeight:600,fontSize:14,color:C.text}}>{u.name}</div></div>
         <div style={{fontWeight:700,color:C.primary}}>{u.xp} xp</div>
       </Card>)}
+      {meOutside&&<Card C={C} style={{marginBottom:10,padding:"12px 16px",display:"flex",alignItems:"center",gap:12,border:`2px solid ${C.primary}`}}>
+        <div style={{fontSize:16,fontWeight:700,color:C.gray400,minWidth:24,textAlign:"center"}}>{meOutside.rank}</div>
+        <div style={{flex:1,fontWeight:600,fontSize:14,color:C.text}}>{T.profile}</div>
+        <div style={{fontWeight:700,color:C.primary}}>{meOutside.xp} xp</div>
+      </Card>}
     </div>
   </div>;
 }
@@ -1901,20 +2017,32 @@ function AboutScreen({setScreen, T, C, lang}) {
 }
 
 // ─── REFERRAL SCREEN ───
-function ReferralScreen({setScreen, T, C, user, addToast}) {
-  const refCode = genReferralCode(user);
-  // Demo ma'lumotlar (real da backenddan keladi)
-  const [invitedCount] = useState(4);
-  const [history] = useState([
+function ReferralScreen({setScreen, T, C, user, addToast, api}) {
+  // Online: GET /referrals/me → { code, link, invited, rewards, next, history }
+  const [remote, setRemote] = useState(null);
+  useEffect(() => {
+    if (!api) return;
+    api.get('/referrals/me').then(setRemote).catch(() => addToast("Referal ma'lumotlari yuklanmadi", "error"));
+  }, [api]); // eslint-disable-line react-hooks/exhaustive-deps
+  const ref = api ? remote : null;
+  const refCode = ref?.code || user?.referralCode || genReferralCode(user);
+  const refLink = ref?.link || `https://t.me/${APP_CONFIG.botUsername}?startapp=${refCode}`;
+  // Demo ma'lumotlar (offline rejim)
+  const [demoInvited] = useState(4);
+  const [demoHistory] = useState([
     {name:"Alisher T.", date:"10.06.2025", status:"active"},
     {name:"Bobur M.",   date:"09.06.2025", status:"active"},
     {name:"Sardor K.",  date:"08.06.2025", status:"active"},
     {name:"Zulfiya N.", date:"07.06.2025", status:"active"},
   ]);
+  const invitedCount = ref ? ref.invited : demoInvited;
+  const history = ref
+    ? (ref.history || []).map(h => ({ name: h.firstName || "—", date: new Date(h.createdAt).toLocaleDateString("ru-RU"), status: h.rewarded ? "rewarded" : "active" }))
+    : demoHistory;
 
   const milestones = REFERRAL_CONFIG.milestones;
-  const earned = milestones.filter(m => invitedCount >= m.count);
-  const next = nextMilestone(invitedCount);
+  const earned = ref ? (ref.rewards || []) : milestones.filter(m => invitedCount >= m.count);
+  const next = ref ? (ref.next ? { ...ref.next, label: proDaysLabel(ref.next.days) } : null) : nextMilestone(invitedCount);
   const progressPct = next ? Math.min(100, Math.round(invitedCount / next.count * 100)) : 100;
 
   const copyCode = () => {
@@ -1924,7 +2052,7 @@ function ReferralScreen({setScreen, T, C, user, addToast}) {
 
   const shareRef = () => {
     const text = `IQuest'da aqlingizni sinang! Mening referal kodim: ${refCode}
-https://t.me/${APP_CONFIG.botUsername}?start=${refCode}`;
+${refLink}`;
     if(window.Telegram?.WebApp?.switchInlineQuery) {
       window.Telegram.WebApp.switchInlineQuery(text);
     } else {
@@ -2057,7 +2185,7 @@ https://t.me/${APP_CONFIG.botUsername}?start=${refCode}`;
                   <div style={{fontWeight:600,fontSize:13,color:C.text}}>{h.name}</div>
                   <div style={{fontSize:11,color:C.subtext}}>{h.date}</div>
                 </div>
-                <span style={{fontSize:10,fontWeight:700,background:"#DCFCE7",color:"#16A34A",borderRadius:6,padding:"2px 8px"}}>Faol</span>
+                <span style={{fontSize:10,fontWeight:700,background:"#DCFCE7",color:"#16A34A",borderRadius:6,padding:"2px 8px"}}>{h.status==="rewarded"?T.referralGifted:"Faol"}</span>
               </div>
             ))}
           </div>
@@ -2067,13 +2195,19 @@ https://t.me/${APP_CONFIG.botUsername}?start=${refCode}`;
   );
 }
 
-function ProfileScreen({setScreen,user,setUser,T,C,dark,setDark,lang,setLang,savedQuestions,setShowLangModal,tgUser}) {
+function ProfileScreen({setScreen,user,setUser,T,C,dark,setDark,lang,setLang,savedQuestions,setShowLangModal,tgUser,api,addToast}) {
   const [editing,setEditing]=useState(false);
   const [form,setForm]=useState({name:user?.name||"",surname:user?.surname||"",phone:user?.phone||""});
 
   const saveProfile=()=>{
     setUser({...user,...form});
     setEditing(false);
+    if(!api) return;
+    // Online: PATCH /me (telefon: +998XXXXXXXXX yoki bo'sh — bo'sh joy/tirelarni olib tashlaymiz)
+    const phone=form.phone.replace(/[\s()-]/g,"");
+    api.patch('/me',{firstName:form.name.trim(),lastName:form.surname.trim(),phone})
+      .then(res=>{ if(res?.user) setUser(prev=>mapApiUser(res.user,prev)); addToast("Profil saqlandi","success"); })
+      .catch(err=>addToast(err.status===400?"Telefon formati: +998XXXXXXXXX":"Profil serverga saqlanmadi","error"));
   };
 
   const openTg = (username) => {
@@ -2222,8 +2356,16 @@ function ProfileScreen({setScreen,user,setUser,T,C,dark,setDark,lang,setLang,sav
 }
 
 // ─── PRO SCREEN ───
-function ProScreen({T,C,setScreen,addToast,setNotifs,notifSettings}) {
+function ProScreen({T,C,setScreen,addToast,setNotifs,notifSettings,api,refreshMe}) {
   const [plan,setPlan]=useState("month1");
+  // Online: GET /payments/plans → { plans:[{id,days,uzs,uzsFinal,stars}], discount, card }
+  const [remote,setRemote]=useState(null);
+  const [busy,setBusy]=useState(false);
+  useEffect(()=>{
+    if(!api) return;
+    api.get('/payments/plans').then(setRemote).catch(()=>{});
+  },[api]);
+  const rp=api?remote:null;
 
   // step: "plans" | "payment" | "pending"
   const [step,setStep]=useState("plans");
@@ -2235,12 +2377,18 @@ function ProScreen({T,C,setScreen,addToast,setNotifs,notifSettings}) {
 
   // Chegirmali narxlar
   const rawPrices = {week:9900, month1:29900, month2:49900};
-  const plans = [
+  const planMeta = {week:{labelKey:"proWeekly",badge:null}, month1:{labelKey:"proMonth1",badge:T.proPopular}, month2:{labelKey:"proMonth2",badge:T.proBest}};
+  const plans = rp?.plans?.length
+    ? rp.plans.map(p=>({id:p.id, labelKey:planMeta[p.id]?.labelKey||"proMonthly", days:p.days, badge:planMeta[p.id]?.badge||null, original:p.uzs, final:p.uzsFinal, saved:p.uzs-p.uzsFinal, stars:p.stars}))
+    : [
     {id:"week",   labelKey:"proWeekly",  days:7,  badge:null,          ...calcDiscounted(rawPrices.week)},
     {id:"month1", labelKey:"proMonth1",  days:30, badge:T.proPopular,  ...calcDiscounted(rawPrices.month1)},
     {id:"month2", labelKey:"proMonth2",  days:60, badge:T.proBest,     ...calcDiscounted(rawPrices.month2)},
   ];
-  const daysLeft = discountDaysLeft();
+  // Chegirma: online — backenddan (applied — hozir amalda), offline — DISCOUNT
+  const disc = rp?.discount || DISCOUNT;
+  const discOn = rp ? !!(rp.discount?.applied ?? (disc.active && disc.percent > 0)) : (DISCOUNT.active && DISCOUNT.percent > 0);
+  const daysLeft = rp ? (disc.endDate ? Math.max(0, Math.ceil((new Date(disc.endDate) - new Date()) / 86400000)) : null) : discountDaysLeft();
 
   const features=[
     {Icon:IC.Bell,      color:"#fff", bg:C.primary,   lk:"proNoAds"},
@@ -2248,11 +2396,30 @@ function ProScreen({T,C,setScreen,addToast,setNotifs,notifSettings}) {
     {Icon:IC.BarChart,  color:"#fff", bg:"#6366F1",   lk:"proStats"},
   ];
 
-  const selectedPlan=plans.find(p=>p.id===plan);
+  const selectedPlan=plans.find(p=>p.id===plan)||plans[0];
 
-  // Karta raqami (admin o'zgartiradi)
-  const CARD_NUMBER = "8600 1234 5678 9012";
-  const CARD_OWNER  = "IQUEST";
+  // Karta raqami (admin o'zgartiradi; online — /payments/plans → card)
+  const CARD_NUMBER = rp?.card?.number || "8600 1234 5678 9012";
+  const CARD_OWNER  = rp?.card?.owner || "IQUEST";
+
+  // Telegram Stars orqali to'lov: invoice → openInvoice → 'paid' bo'lsa /me qayta olinadi
+  const payStars=()=>{
+    if(!api||busy) return;
+    setBusy(true);
+    api.post('/payments/stars/invoice',{plan}).then(({invoiceLink})=>{
+      setBusy(false);
+      const tg=window.Telegram?.WebApp;
+      if(!tg?.openInvoice){ window.open(invoiceLink,"_blank"); return; }
+      tg.openInvoice(invoiceLink,(status)=>{
+        if(status==="paid"){
+          // Pro webhook orqali beriladi — biroz kechikish bo'lishi mumkin, shuning uchun ikki marta so'raymiz
+          refreshMe?.(); setTimeout(()=>refreshMe?.(),2500);
+          addToast("🎉 Pro obuna faollashtirildi!","success");
+          setScreen("profile");
+        } else if(status==="failed") addToast("To'lov amalga oshmadi","error");
+      });
+    }).catch(()=>{ setBusy(false); addToast("Stars to'lovini boshlab bo'lmadi","error"); });
+  };
 
   const copyCard=()=>{
     try{ navigator.clipboard.writeText(CARD_NUMBER.replace(/\s/g,"")); }catch{}
@@ -2269,6 +2436,24 @@ function ProScreen({T,C,setScreen,addToast,setNotifs,notifSettings}) {
 
   const handleSubmit=()=>{
     if(!receipt){ addToast("Avval to\'lov chekini yuklang","error"); return; }
+
+    // Online: POST /payments/receipt (multipart: plan + file). Tasdiq admin orqali, bildirishnoma serverdan keladi
+    if(api){
+      if(busy) return;
+      setBusy(true);
+      const fd=new FormData();
+      fd.append("plan",plan);
+      fd.append("file",receipt);
+      api.upload('/payments/receipt',fd).then(()=>{
+        setBusy(false);
+        setStep("pending");
+        addToast("To'lov chekingiz yuborildi. Tekshirilmoqda ⏳","info");
+      }).catch(err=>{
+        setBusy(false);
+        addToast(err.status===409?"Sizda tekshirilayotgan chek bor":err.status===413?"Fayl juda katta (≤ 5 MB)":err.status===400?"Faqat JPG, PNG, WEBP yoki PDF (≤ 5 MB)":"Chek yuborilmadi","error");
+      });
+      return;
+    }
 
     // Kutish rejimiga o'tish
     setStep("pending");
@@ -2387,7 +2572,7 @@ function ProScreen({T,C,setScreen,addToast,setNotifs,notifSettings}) {
           <span style={{fontWeight:800,color:"white"}}>{selectedPlan.final.toLocaleString()} so'm</span>
           {selectedPlan.saved > 0 && (
             <span style={{background:"rgba(255,255,255,0.25)",borderRadius:8,padding:"2px 8px",fontSize:11,fontWeight:700}}>
-              -{DISCOUNT.percent}% tejaydingiz
+              -{disc.percent}% tejaydingiz
             </span>
           )}
         </div>
@@ -2517,11 +2702,11 @@ function ProScreen({T,C,setScreen,addToast,setNotifs,notifSettings}) {
 
       <div style={{padding:"20px 16px"}}>
         {/* Chegirma banneri */}
-        {DISCOUNT.active && DISCOUNT.percent > 0 && (
+        {discOn && (
           <div style={{background:"linear-gradient(135deg,#EF4444,#F59E0B)",borderRadius:16,padding:"12px 16px",marginBottom:16,display:"flex",alignItems:"center",gap:12}}>
             <IC.Celebrate size={24} color="white"/>
             <div style={{flex:1}}>
-              <div style={{color:"white",fontWeight:800,fontSize:14}}>{DISCOUNT.label} — -{DISCOUNT.percent}%</div>
+              <div style={{color:"white",fontWeight:800,fontSize:14}}>{disc.label} — -{disc.percent}%</div>
               {daysLeft !== null && daysLeft > 0 && (
                 <div style={{color:"rgba(255,255,255,0.85)",fontSize:12,marginTop:2}}>
                   {daysLeft} kun qoldi • Ulguring!
@@ -2532,7 +2717,7 @@ function ProScreen({T,C,setScreen,addToast,setNotifs,notifSettings}) {
               )}
             </div>
             <div style={{background:"rgba(255,255,255,0.25)",borderRadius:10,padding:"6px 10px",textAlign:"center"}}>
-              <div style={{color:"white",fontWeight:900,fontSize:20,lineHeight:1}}>-{DISCOUNT.percent}%</div>
+              <div style={{color:"white",fontWeight:900,fontSize:20,lineHeight:1}}>-{disc.percent}%</div>
               <div style={{color:"rgba(255,255,255,0.8)",fontSize:9,fontWeight:700}}>CHEGIRMA</div>
             </div>
           </div>
@@ -2558,7 +2743,7 @@ function ProScreen({T,C,setScreen,addToast,setNotifs,notifSettings}) {
                 <div style={{fontSize:9,color:sel?C.primary:C.subtext,fontWeight:700,marginBottom:4}}>so'm</div>
                 {p.saved > 0 && (
                   <div style={{fontSize:8,fontWeight:800,background:"#EF4444",color:"white",borderRadius:4,padding:"1px 4px",marginBottom:3}}>
-                    -{DISCOUNT.percent}%
+                    -{disc.percent}%
                   </div>
                 )}
                 <div style={{fontSize:10,color:sel?C.primary:C.subtext,fontWeight:700}}>{T[p.labelKey]}</div>
@@ -2589,6 +2774,14 @@ function ProScreen({T,C,setScreen,addToast,setNotifs,notifSettings}) {
           {T.proSubscribe} — {selectedPlan.final.toLocaleString()} so'm
           {selectedPlan.saved > 0 && ` (−${selectedPlan.saved.toLocaleString()})`}
         </button>
+
+        {/* Telegram Stars — faqat online (invoice backend orqali yaratiladi) */}
+        {api && selectedPlan.stars > 0 && (
+          <button onClick={payStars} disabled={busy}
+            style={{width:"100%",marginTop:10,padding:"15px",borderRadius:18,border:`2px solid #F59E0B`,background:"#F59E0B18",color:"#B45309",fontSize:15,fontWeight:800,cursor:busy?"wait":"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:8,opacity:busy?0.7:1}}>
+            <IC.Star size={16} color="#F59E0B"/>Telegram Stars — {selectedPlan.stars} ⭐
+          </button>
+        )}
 
         <div style={{display:"flex",alignItems:"center",justifyContent:"center",gap:6,marginTop:12}}>
           <IC.ShieldCheck size={14} color={C.success}/>
@@ -3019,21 +3212,35 @@ function SavedQuestionsScreen({setScreen,savedQuestions,setSavedQuestions,T,C,la
 }
 
 // ─── NOTIFICATIONS SCREEN ───
-function NotificationsScreen({setScreen,notifs,setNotifs,notifSettings,setNotifSettings,T,C,lang}) {
+function NotificationsScreen({setScreen,notifs,setNotifs,notifSettings,setNotifSettings,T,C,lang,api,setNotifUnread,addToast}) {
   const [tab,setTab]=useState("all");
   const [showSettings,setShowSettings]=useState(false);
 
-  // Filter notifs by both tab AND settings
+  // Filter notifs by both tab AND settings (sozlamada yo'q turlar — payment, referral — doim ko'rinadi)
+  const typeOn=(type)=>notifSettings[type]!==false;
   const visibleNotifs=notifs.filter(n=>{
-    if(!notifSettings[n.type]) return false;
+    if(!typeOn(n.type)) return false;
     if(tab==="unread") return !n.read;
     return true;
   });
-  const unreadCount=notifs.filter(n=>!n.read&&notifSettings[n.type]).length;
+  const unreadCount=notifs.filter(n=>!n.read&&typeOn(n.type)).length;
 
-  const markAll=()=>setNotifs(notifs.map(n=>({...n,read:true})));
-  const markOne=(id)=>setNotifs(notifs.map(n=>n.id===id?{...n,read:true}:n));
-  const deleteOne=(id)=>setNotifs(notifs.filter(n=>n.id!==id));
+  // Online: POST /notifications/read-all va /notifications/:id/read (local:true — faqat lokal)
+  const markAll=()=>{
+    setNotifs(notifs.map(n=>({...n,read:true})));
+    if(!api) return;
+    setNotifUnread?.(0);
+    api.post('/notifications/read-all').catch(()=>addToast?.("Server bilan aloqa yo'q","error"));
+  };
+  const markOne=(id)=>{
+    const n=notifs.find(x=>x.id===id);
+    setNotifs(notifs.map(n=>n.id===id?{...n,read:true}:n));
+    if(!api||!n||n.read||n.local) return;
+    setNotifUnread?.(u=>Math.max(0,(u||0)-1));
+    api.post(`/notifications/${id}/read`).catch(()=>{});
+  };
+  // Backendda o'chirish endpointi yo'q — online'da o'qilgan deb belgilab, lokal ro'yxatdan olib tashlaymiz
+  const deleteOne=(id)=>{ markOne(id); setNotifs(p=>p.filter(n=>n.id!==id)); };
 
   const timeLabel=(mins)=>{
     if(mins<1) return T.justNow;
@@ -3186,7 +3393,7 @@ function NotificationsScreen({setScreen,notifs,setNotifs,notifSettings,setNotifS
                 </div>
                 <div style={{flex:1,minWidth:0}}>
                   <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:3}}>
-                    <span style={{fontWeight:700,fontSize:13,color:C.text}}>{T[n.titleKey]}</span>
+                    <span style={{fontWeight:700,fontSize:13,color:C.text}}>{T[n.titleKey]||T[n.type]||n.titleKey}</span>
                     <span style={{fontSize:11,color:C.subtext,flexShrink:0,marginLeft:8}}>{timeLabel(n.time)}</span>
                   </div>
                   <p style={{margin:0,fontSize:13,color:C.subtext,lineHeight:1.5}}>{n.body[lang]||n.body.uz}</p>
@@ -3509,7 +3716,10 @@ function useTelegram() {
     const initData = tg?.initData;
     if (!initData || !API_URL) return null;
     try {
-      const res = await apiPost('/auth/telegram', { initData });
+      // Telegram'da referal start_param orqali (initData ichida) keladi; brauzerda — ?ref=CODE
+      let ref = null;
+      try { ref = new URLSearchParams(window.location.search).get('ref'); } catch { ref = null; }
+      const res = await apiPost('/auth/telegram', ref ? { initData, ref: ref.slice(0, 32) } : { initData });
       return res;
     } catch (err) {
       console.error('Backend login xatosi:', err);
@@ -3553,29 +3763,33 @@ export default function App() {
     loginToBackend().then(res => {
       if (!res) return;
       try { sessionStorage.setItem('auth_token', res.token); } catch {}
-      setToken(res.token);
-      if (res.user) {
-        setUser(prev => ({
-          ...prev,
-          id: res.user.id,
-          tgId: res.user.tgId,
-          name: res.user.firstName || prev.name,
-          surname: res.user.lastName || prev.surname,
-          username: res.user.username || prev.username,
-          isPro: res.user.isPro || false,
-          proExpiresAt: res.user.proExpiresAt,
-          referralCode: res.user.referralCode,
-        }));
-      }
       // Backend dan sozlamalarni olamiz
-      if (res.settings) {
-        if (res.settings.daily_test_limit) LIMITS.dailyTestLimit = res.settings.daily_test_limit.value;
-        if (res.settings.free_exam_count) LIMITS.freeExamCount = res.settings.free_exam_count.value;
-        if (res.settings.free_ticket_count) LIMITS.freeTicketCount = res.settings.free_ticket_count.value;
-        if (res.settings.discount) Object.assign(DISCOUNT, res.settings.discount);
-      }
+      applyApiSettings(res.settings);
+      if (res.user) setUser(prev => mapApiUser(res.user, prev));
+      setToken(res.token);
     }).catch(err => console.warn('Backend login failed, using offline mode:', err));
   }, [tgUser?.id]);
+
+  // Token bor va API_URL berilgan bo'lsa — online rejim (aks holda null → mock ma'lumotlar)
+  const api = useMemo(() => makeApi(token), [token]);
+  // Bugungi sarf (GET /me → usage): { practiceQuestions, iqTests }
+  const [usage, setUsage] = useState(null);
+
+  // GET /me — user, limitlar, usage. 401 bo'lsa token eskirgan → offline rejimga qaytamiz
+  const refreshMe = () => {
+    if (!api) return Promise.resolve(null);
+    return api.get('/me').then(res => {
+      applyApiSettings(res.settings);
+      if (res.limits) Object.assign(LIMITS, res.limits);
+      if (res.usage) setUsage(res.usage);
+      if (res.user) setUser(prev => mapApiUser(res.user, prev));
+      return res;
+    }).catch(err => {
+      if (err.status === 401) { try { sessionStorage.removeItem('auth_token'); } catch { /* sessionStorage yo'q */ } setToken(null); }
+      console.warn('GET /me xatosi:', err);
+      return null;
+    });
+  };
 
   // Onboardingni faqat birinchi marta ko'rsatish
   // localStorage ishlatish mumkin emas (Telegram Mini App da cheklov bor)
@@ -3593,10 +3807,68 @@ export default function App() {
   const [dark, setDark] = useState(isDark);
   const [lang, setLang] = useState("uz");
   const [notifs, setNotifs] = useState(INIT_NOTIFS);
-  const [notifSettings, setNotifSettings] = useState({ daily: true, result: true, new: true, exam: true });
+  const [notifUnread, setNotifUnread] = useState(null); // online: backend `unread` soni
+  const [notifSettings, setNotifSettingsRaw] = useState({ daily: true, result: true, new: true, exam: true });
   const [toasts, setToasts] = useState([]);
-  const [savedQuestions, setSavedQuestions] = useState([]);
+  const [savedQuestions, setSavedQuestionsRaw] = useState([]);
   const [showLangModal, setShowLangModal] = useState(false);
+
+  // Backend bildirishnomasi → ekran formati (time — necha daqiqa oldin)
+  const mapNotif = (n) => ({
+    id: n.id, type: n.type, read: n.read, titleKey: n.titleKey,
+    body: n.body || {}, time: Math.max(0, Math.round((Date.now() - new Date(n.createdAt).getTime()) / 60000)),
+  });
+  const loadNotifs = () => {
+    if (!api) return;
+    api.get('/notifications').then(res => {
+      // Lokal (masalan IQ test natijasi) bildirishnomalarni saqlab qolamiz
+      setNotifs(p => [...p.filter(n => n.local), ...(res.items || []).map(mapNotif)]);
+      setNotifUnread(res.unread ?? 0);
+    }).catch(err => console.warn('GET /notifications xatosi:', err));
+  };
+
+  // Online bo'lganda: /me, saqlanganlar, bildirishnoma sozlamalari va ro'yxati
+  useEffect(() => {
+    if (!api) return;
+    refreshMe();
+    api.get('/me/saved').then(res => {
+      const remote = (res.items || []).map(i => ({ ...(i.data || {}), key: i.key }));
+      setSavedQuestionsRaw(p => [...remote, ...p.filter(s => !remote.some(r => r.key === s.key))]);
+    }).catch(err => console.warn('GET /me/saved xatosi:', err));
+    api.get('/notifications/prefs').then(p => setNotifSettingsRaw(s => ({ ...s, ...p }))).catch(() => {});
+    loadNotifs();
+  }, [api]); // eslint-disable-line react-hooks/exhaustive-deps -- faqat login/token o'zgarganda
+
+  // Saqlanganlar: lokal holat — ko'rsatish manbai; backend bilan fon rejimida sinxronlanadi
+  const setSavedQuestions = (next) => {
+    const prev = savedQuestions;
+    setSavedQuestionsRaw(next);
+    if (!api) return;
+    const nk = new Set(next.map(s => s.key)), pk = new Set(prev.map(s => s.key));
+    const reqs = [
+      ...prev.filter(s => !nk.has(s.key)).map(s => api.del('/me/saved/' + encodeURIComponent(s.key))),
+      ...next.filter(s => !pk.has(s.key)).map(s => api.put('/me/saved/' + encodeURIComponent(s.key), { data: s })),
+    ];
+    Promise.all(reqs).catch(() => addToast({ uz: "Saqlanganlar sinxronlanmadi", ru: "Не удалось синхронизировать", kril: "Сақланганлар синхронланмади" }[lang], "error"));
+  };
+
+  // Bildirishnoma sozlamalari: online bo'lsa PUT /notifications/prefs
+  const setNotifSettings = (next) => {
+    setNotifSettingsRaw(next);
+    if (api) api.put('/notifications/prefs', next).catch(() => addToast("Sozlamalar saqlanmadi", "error"));
+  };
+
+  // Natijani backendga yozish (POST /results) — fire-and-forget, user (xp) yangilanadi
+  const postResult = (body) => {
+    if (!api) return;
+    api.post('/results', body).then(res => {
+      if (res?.user) setUser(prev => mapApiUser(res.user, prev));
+      if (body.kind === 'practice') setUsage(u => u ? { ...u, practiceQuestions: (u.practiceQuestions || 0) + body.total } : u);
+    }).catch(err => {
+      console.warn('POST /results xatosi:', err);
+      addToast(err.status === 403 ? "Natija saqlanmadi: Pro kerak" : "Natija serverga saqlanmadi", "error");
+    });
+  };
 
   // Ekran o'zgarganda Telegram Back button boshqaruvi
   const setScreen = (s) => {
@@ -3635,7 +3907,15 @@ export default function App() {
   const noNav = ["ticket-quiz", "test-quiz", "exam-quiz", "notifications", "saved", "search", "pro"];
   const showNav = !noNav.includes(screen);
 
-  const unreadCount = notifs.filter(n => !n.read).length;
+  // Online: backend `unread` + lokal o'qilmaganlar; offline: ro'yxatdan hisoblanadi
+  const unreadCount = api && notifUnread !== null
+    ? notifUnread + notifs.filter(n => n.local && !n.read).length
+    : notifs.filter(n => !n.read).length;
+
+  // Bildirishnomalar ekrani ochilganda ro'yxatni yangilaymiz
+  useEffect(() => {
+    if (screen === "notifications") loadNotifs();
+  }, [screen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const addToast = (msg, type = "info") => {
     const id = Date.now();
@@ -3653,9 +3933,9 @@ export default function App() {
     setShowOnboarding(false);
   };
 
-  // Simulate incoming notification every 30s
+  // Simulate incoming notification every 30s — faqat offline (demo) rejimda
   useEffect(() => {
-    if (!user) return;
+    if (!user || api) return;
     const t = setInterval(() => {
       const msgs = {
         uz: "Yangi bildirishnoma keldi!",
@@ -3666,7 +3946,7 @@ export default function App() {
       addToast(msgs[lang], "info");
     }, 30000);
     return () => clearInterval(t);
-  }, [user, lang]);
+  }, [user, lang, api]);
 
   const handleExamResult = (result) => {
     setExamResult(result);
@@ -3677,11 +3957,12 @@ export default function App() {
     };
     addToast(msg[lang], "info");
     if (notifSettings.result) {
-      setNotifs(p => [{ id: Date.now(), type: "result", read: false, time: 0, titleKey: "notifResult", body: msg }, ...p]);
+      // local:true — backendda yo'q (IQ test serverga yozilmaydi), API ga yuborilmaydi
+      setNotifs(p => [{ id: Date.now(), local: true, type: "result", read: false, time: 0, titleKey: "notifResult", body: msg }, ...p]);
     }
   };
 
-  const props = { T, C, dark, setDark, lang, setLang, notifs, setNotifs, notifSettings, setNotifSettings, unreadCount, addToast, savedQuestions, setSavedQuestions, setShowLangModal };
+  const props = { T, C, dark, setDark, lang, setLang, notifs, setNotifs, notifSettings, setNotifSettings, unreadCount, addToast, savedQuestions, setSavedQuestions, setShowLangModal, api, usage, refreshMe, postResult, setNotifUnread };
 
   const render = () => {
     switch (screen) {
@@ -3703,7 +3984,7 @@ export default function App() {
       case "rating": return <RatingScreen {...props} />;
       case "profile": return <ProfileScreen {...props} setScreen={setScreen} user={user} setUser={setUser} tgUser={tgUser} />;
       case "pro": return <ProScreen {...props} setScreen={setScreen} />;
-      case "referral": return <ReferralScreen T={T} C={C} setScreen={setScreen} user={user} addToast={addToast}/>;
+      case "referral": return <ReferralScreen T={T} C={C} setScreen={setScreen} user={user} addToast={addToast} api={api}/>;
       case "about": return <AboutScreen T={T} C={C} setScreen={setScreen} lang={lang}/>;
       case "topics": return <TopicsScreen {...props} setScreen={setScreen} />;
       case "rules": return <RulesScreen {...props} setScreen={setScreen} />;
