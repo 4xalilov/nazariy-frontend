@@ -1,9 +1,23 @@
 import { useState, useEffect, useRef, useMemo } from "react";
+import { Capacitor } from "@capacitor/core";
+import { App as CapApp } from "@capacitor/app";
+import { AppLauncher } from "@capacitor/app-launcher";
+
+// ─── PLATFORMA ───
+// IS_NATIVE — Android ilova (Capacitor). Telegram Mini App va brauzerda false.
+const IS_NATIVE = Capacitor.isNativePlatform();
+// Android'da sessionStorage ilova yopilganda o'chadi — token va sozlamalar localStorage'da saqlanadi
+const persist = {
+  get: (k) => { try { return (IS_NATIVE ? localStorage : sessionStorage).getItem(k); } catch { return null; } },
+  set: (k, v) => { try { (IS_NATIVE ? localStorage : sessionStorage).setItem(k, v); } catch { /* storage yo'q */ } },
+  del: (k) => { try { (IS_NATIVE ? localStorage : sessionStorage).removeItem(k); } catch { /* storage yo'q */ } },
+};
 
 // ─── TRANSLATIONS ───
 const LANGS = {
   uz: {
     code:"uz", label:"O'zbekcha", flag:"🇺🇿",
+    proNativeSoon:"Pro obunani ilova ichida sotib olish tez orada qo'shiladi.",
     keepPracticing:"Yaxshi urinish!",
     services:"Xizmatlar", tipHint:"Bu strategiyani keyingi mashqda qo'llab ko'ring.", sectionsWord:"bo'lim",
     login:"Kirish", register:"Ro'yxatdan o'tish", phone:"Telefon raqam", password:"Parol",
@@ -102,6 +116,7 @@ const LANGS = {
   },
   ru: {
     code:"ru", label:"Русский", flag:"🇷🇺",
+    proNativeSoon:"Покупка Pro в приложении скоро появится.",
     keepPracticing:"Хорошая попытка!",
     services:"Сервисы", tipHint:"Попробуйте применить эту стратегию в следующей практике.", sectionsWord:"разделов",
     login:"Войти", register:"Регистрация", phone:"Номер телефона", password:"Пароль",
@@ -184,6 +199,7 @@ const LANGS = {
   },
   kril: {
     code:"kril", label:"Ўзбекча", flag:"🇺🇿",
+    proNativeSoon:"Pro обунани илова ичида сотиб олиш тез орада қўшилади.",
     keepPracticing:"Яхши уриниш!",
     services:"Хизматлар", tipHint:"Бу стратегияни кейинги машқда қўллаб кўринг.", sectionsWord:"бўлим",
     login:"Кириш", register:"Рўйхатдан ўтиш", phone:"Телефон рақам", password:"Парол",
@@ -1045,9 +1061,9 @@ function ProGate({T, C, setScreen, reason, onBack}) {
       </div>
       <h2 style={{fontSize:22, fontWeight:900, color:C.text, margin:"0 0 10px"}}>{r.title}</h2>
       <p style={{fontSize:14, color:C.subtext, margin:"0 0 32px", lineHeight:1.7, maxWidth:280}}>{r.sub}</p>
-      <button onClick={()=>setScreen("pro")} style={{width:"100%", maxWidth:300, padding:"16px", borderRadius:16, border:"none", background:"linear-gradient(135deg,#8B5CF6,#6366F1)", color:"white", fontSize:16, fontWeight:800, cursor:"pointer", boxShadow:"0 6px 20px rgba(139,92,246,0.4)", marginBottom:12}}>
+      {!IS_NATIVE && <button onClick={()=>setScreen("pro")} style={{width:"100%", maxWidth:300, padding:"16px", borderRadius:16, border:"none", background:"linear-gradient(135deg,#8B5CF6,#6366F1)", color:"white", fontSize:16, fontWeight:800, cursor:"pointer", boxShadow:"0 6px 20px rgba(139,92,246,0.4)", marginBottom:12}}>
         <span style={{display:"flex",alignItems:"center",gap:8,justifyContent:"center"}}><IC.Diamond size={18} color="white"/>Pro obuna olish</span>
-      </button>
+      </button>}
       <button onClick={onBack} style={{width:"100%", maxWidth:300, padding:"14px", borderRadius:14, border:`2px solid ${C.gray200}`, background:"transparent", color:C.subtext, fontSize:14, fontWeight:600, cursor:"pointer"}}>
         Orqaga qaytish
       </button>
@@ -2356,6 +2372,92 @@ function ProfileScreen({setScreen,user,setUser,T,C,dark,setDark,lang,setLang,sav
 }
 
 // ─── PRO SCREEN ───
+// ─── ANDROID: TELEGRAM ORQALI KIRISH ───
+// POST /auth/app/start → t.me/<bot>?start=login_<nonce> → foydalanuvchi botda Start bosadi → /auth/app/poll token beradi
+const LOGIN_TEXTS = {
+  uz:   { title:"Hisobingizga kiring", sub:"Natijalaringiz, reyting va Pro obuna Telegram hisobingizga bog'lanadi.", tg:"Telegram orqali kirish", waiting:"Telegram'da botni oching va Start tugmasini bosing…", retry:"Qayta urinish", guest:"Hozircha mehmon sifatida", expired:"Havola eskirdi. Qayta urinib ko'ring.", error:"Serverga ulanib bo'lmadi. Internetni tekshiring." },
+  ru:   { title:"Войдите в аккаунт", sub:"Результаты, рейтинг и Pro-подписка привязываются к вашему Telegram.", tg:"Войти через Telegram", waiting:"Откройте бота в Telegram и нажмите Start…", retry:"Повторить", guest:"Пока как гость", expired:"Ссылка устарела. Попробуйте снова.", error:"Не удалось подключиться к серверу. Проверьте интернет." },
+  kril: { title:"Ҳисобингизга киринг", sub:"Натижаларингиз, рейтинг ва Pro обуна Telegram ҳисобингизга боғланади.", tg:"Telegram орқали кириш", waiting:"Telegram'да ботни очинг ва Start тугмасини босинг…", retry:"Қайта уриниш", guest:"Ҳозирча меҳмон сифатида", expired:"Ҳавола эскирди. Қайта уриниб кўринг.", error:"Серверга уланиб бўлмади. Интернетни текширинг." },
+};
+
+function NativeLoginScreen({C, lang, onLogin, onGuest}) {
+  const L = LOGIN_TEXTS[lang] || LOGIN_TEXTS.uz;
+  const [state, setState] = useState("idle"); // idle | waiting | expired | error
+  const nonceRef = useRef(null);
+  const timerRef = useRef(null);
+
+  const stop = () => { clearInterval(timerRef.current); timerRef.current = null; };
+  const poll = async () => {
+    const nonce = nonceRef.current; if (!nonce) return;
+    try {
+      const res = await fetch(API_URL + "/auth/app/poll", { method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify({ nonce }) });
+      if (res.status === 410) { stop(); nonceRef.current = null; setState("expired"); return; }
+      const body = await res.json();
+      if (body.status === "ok") { stop(); nonceRef.current = null; onLogin(body); }
+    } catch { /* tarmoq uzilishi — keyingi urinishda */ }
+  };
+
+  // Telegram'dan ilovaga qaytganda darhol tekshiramiz
+  useEffect(() => {
+    const h = CapApp.addListener("resume", () => { if (nonceRef.current) poll(); });
+    return () => { stop(); h.then(x => x.remove()); };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  const start = async () => {
+    setState("waiting");
+    try {
+      const res = await fetch(API_URL + "/auth/app/start", { method:"POST", headers:{ "Content-Type":"application/json" }, body:"{}" });
+      if (!res.ok) throw new Error(String(res.status));
+      const { nonce, botLink } = await res.json();
+      nonceRef.current = nonce;
+      stop(); timerRef.current = setInterval(poll, 2500);
+      try { await AppLauncher.openUrl({ url: botLink }); } catch { window.open(botLink, "_blank"); }
+    } catch { setState("error"); }
+  };
+
+  const msg = state === "waiting" ? L.waiting : state === "expired" ? L.expired : state === "error" ? L.error : null;
+  return (
+    <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",justifyContent:"center",padding:28,background:`linear-gradient(160deg,${C.gradStart},${C.gradEnd})`}}>
+      <div style={{width:88,height:88,borderRadius:26,background:"white",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 22px",boxShadow:"0 10px 30px rgba(0,0,0,0.2)"}}>
+        <span style={{color:"#4F3FD0",fontSize:48,fontWeight:900,fontFamily:"serif",lineHeight:1}}>Q</span>
+      </div>
+      <h2 style={{color:"white",fontSize:26,fontWeight:900,textAlign:"center",margin:"0 0 8px"}}>{L.title}</h2>
+      <p style={{color:"rgba(255,255,255,0.8)",fontSize:14,textAlign:"center",lineHeight:1.6,margin:"0 0 32px"}}>{L.sub}</p>
+      <button onClick={start} disabled={state==="waiting"} style={{width:"100%",padding:16,borderRadius:16,border:"none",background:"white",color:"#4F3FD0",fontSize:16,fontWeight:800,cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center",gap:10,opacity:state==="waiting"?0.7:1}}>
+        <IC.TelegramIcon size={20} color="#229ED9"/>{state==="expired"||state==="error" ? L.retry : L.tg}
+      </button>
+      {msg && <p style={{color:"white",fontSize:13,textAlign:"center",margin:"16px 0 0",lineHeight:1.5}}>{msg}</p>}
+      <button onClick={onGuest} style={{marginTop:18,background:"transparent",border:"none",color:"rgba(255,255,255,0.85)",fontSize:14,fontWeight:600,cursor:"pointer",padding:10}}>{L.guest}</button>
+    </div>
+  );
+}
+
+// ─── ANDROID: PRO (to'lovsiz) ───
+// Google Play qoidasi: raqamli kontent faqat Play Billing orqali sotiladi. Hozircha Android'da xarid yo'q —
+// faqat Pro holati va imkoniyatlari ko'rsatiladi (tashqi to'lovga yo'naltirish ham yo'q).
+function NativeProScreen({T,C,setScreen,user}) {
+  const active = !!(user?.isPro || user?.pro);
+  const until = user?.proExpiresAt ? new Date(user.proExpiresAt).toLocaleDateString() : null;
+  const feats = [[IC.Bell,T.proNoAds,T.proNoAdsSub],[IC.Clipboard,T.proUnlimited,T.proUnlimitedSub],[IC.BarChart,T.proStats,T.proStatsSub]];
+  return <div style={{minHeight:"100vh",background:C.bg}}>
+    <div style={{...SC.header(C),textAlign:"center",padding:"52px 20px 28px"}}>
+      <button onClick={()=>setScreen("profile")} style={{position:"absolute",left:16,top:52,background:"rgba(255,255,255,0.15)",border:"none",width:36,height:36,borderRadius:10,display:"flex",alignItems:"center",justifyContent:"center"}}><IC.ArrowLeft size={18} color="white"/></button>
+      <div style={{display:"flex",justifyContent:"center",marginBottom:10}}><IC.Diamond size={44} color="white"/></div>
+      <h2 style={{color:"white",fontSize:24,fontWeight:900,margin:0}}>{T.proTitle}</h2>
+      <p style={{color:"rgba(255,255,255,0.8)",fontSize:13,margin:"6px 0 0"}}>{T.proSubtitle}</p>
+    </div>
+    <div style={{padding:20}}>
+      <Card C={C} style={{marginBottom:16,textAlign:"center",padding:20}}>
+        <div style={{fontSize:16,fontWeight:800,color:active?C.success:C.text}}>{active ? `Pro ✓${until?` · ${until}`:""}` : T.proNativeSoon}</div>
+      </Card>
+      {feats.map(([I,t,sub])=><Card key={t} C={C} style={{marginBottom:10,display:"flex",alignItems:"center",gap:14,padding:"14px 16px"}}>
+        <div style={{width:40,height:40,borderRadius:12,background:C.primary+"18",display:"flex",alignItems:"center",justifyContent:"center"}}><I size={20} color={C.primary}/></div>
+        <div><div style={{fontWeight:700,fontSize:14,color:C.text}}>{t}</div><div style={{fontSize:12,color:C.subtext}}>{sub}</div></div>
+      </Card>)}
+    </div>
+  </div>;
+}
+
 function ProScreen({T,C,setScreen,addToast,setNotifs,notifSettings,api,refreshMe}) {
   const [plan,setPlan]=useState("month1");
   // Online: GET /payments/plans → { plans:[{id,days,uzs,uzsFinal,stars}], discount, card }
@@ -3739,7 +3841,7 @@ export default function App() {
 
   // JWT token saqlash
   const [token, setToken] = useState(() => {
-    try { return sessionStorage.getItem('auth_token') || null; } catch { return null; }
+    return persist.get('auth_token');
   });
 
   // Telegram foydalanuvchi avtomatik login
@@ -3762,13 +3864,25 @@ export default function App() {
     if (!loginToBackend) return;
     loginToBackend().then(res => {
       if (!res) return;
-      try { sessionStorage.setItem('auth_token', res.token); } catch {}
+      persist.set('auth_token', res.token);
       // Backend dan sozlamalarni olamiz
       applyApiSettings(res.settings);
       if (res.user) setUser(prev => mapApiUser(res.user, prev));
       setToken(res.token);
     }).catch(err => console.warn('Backend login failed, using offline mode:', err));
   }, [tgUser?.id]);
+
+  // Android: bot orqali kirish yoki mehmon rejimi (API_URL bo'lmasa login ekrani ko'rsatilmaydi)
+  const [guest, setGuest] = useState(() => persist.get("guest_mode") === "1");
+  const needNativeLogin = IS_NATIVE && !!API_URL && !token && !guest;
+  const onNativeLogin = (res) => {
+    persist.set('auth_token', res.token);
+    persist.del("guest_mode");
+    applyApiSettings(res.settings);
+    if (res.user) setUser(prev => mapApiUser(res.user, prev));
+    setToken(res.token);
+  };
+  const continueAsGuest = () => { persist.set("guest_mode", "1"); setGuest(true); };
 
   // Token bor va API_URL berilgan bo'lsa — online rejim (aks holda null → mock ma'lumotlar)
   const api = useMemo(() => makeApi(token), [token]);
@@ -3785,7 +3899,7 @@ export default function App() {
       if (res.user) setUser(prev => mapApiUser(res.user, prev));
       return res;
     }).catch(err => {
-      if (err.status === 401) { try { sessionStorage.removeItem('auth_token'); } catch { /* sessionStorage yo'q */ } setToken(null); }
+      if (err.status === 401) { persist.del('auth_token'); setToken(null); }
       console.warn('GET /me xatosi:', err);
       return null;
     });
@@ -3795,7 +3909,7 @@ export default function App() {
   // localStorage ishlatish mumkin emas (Telegram Mini App da cheklov bor)
   // Shuning uchun sessionStorage ishlatamiz
   const [showOnboarding, setShowOnboarding] = useState(() => {
-    try { return !sessionStorage.getItem("ob_done"); } catch { return true; }
+    return !persist.get("ob_done");
   });
 
   const [activeTicket, setActiveTicket] = useState(null);
@@ -3878,12 +3992,24 @@ export default function App() {
 
   // Qaysi ekranlarda Telegram Back button ko'rsatiladi
   const rootScreens = ["home", "tickets", "tests", "exam", "stats", "rating", "profile"];
+  // Android tizim "orqaga" tugmasi uchun joriy ishlovchi (root ekranda null → ilovadan chiqish)
+  const backRef = useRef(null);
+  useEffect(() => {
+    if (!IS_NATIVE) return;
+    const h = CapApp.addListener("backButton", () => {
+      if (backRef.current) backRef.current();
+      else if (screen !== "home") setScreenRaw("home");
+      else CapApp.exitApp();
+    });
+    return () => { h.then(x => x.remove()); };
+  }, [screen]);
 
   useEffect(() => {
     if (rootScreens.includes(screen)) {
+      backRef.current = null;
       hideBackButton();
     } else {
-      showBackButton(() => {
+      showBackButton(backRef.current = () => {
         // Telegram back button bosilganda oldingi ekranga qaytish
         if (screen === "ticket-quiz") setScreen("tickets");
         else if (screen === "test-quiz") setScreen("tests");
@@ -3929,7 +4055,7 @@ export default function App() {
 
   // Onboarding tugaganda sessionStorage ga yozish
   const finishOnboarding = () => {
-    try { sessionStorage.setItem("ob_done", "1"); } catch {}
+    persist.set("ob_done", "1");
     setShowOnboarding(false);
   };
 
@@ -3983,7 +4109,7 @@ export default function App() {
       case "stats": return <StatsScreen {...props} />;
       case "rating": return <RatingScreen {...props} />;
       case "profile": return <ProfileScreen {...props} setScreen={setScreen} user={user} setUser={setUser} tgUser={tgUser} />;
-      case "pro": return <ProScreen {...props} setScreen={setScreen} />;
+      case "pro": return IS_NATIVE ? <NativeProScreen {...props} setScreen={setScreen} user={user} /> : <ProScreen {...props} setScreen={setScreen} />;
       case "referral": return <ReferralScreen T={T} C={C} setScreen={setScreen} user={user} addToast={addToast} api={api}/>;
       case "about": return <AboutScreen T={T} C={C} setScreen={setScreen} lang={lang}/>;
       case "topics": return <TopicsScreen {...props} setScreen={setScreen} />;
@@ -4016,6 +4142,8 @@ export default function App() {
 
       {showOnboarding ? (
         <OnboardingScreen onFinish={finishOnboarding} T={T} C={C} lang={lang} setLang={setLang} />
+      ) : needNativeLogin ? (
+        <NativeLoginScreen C={C} lang={lang} onLogin={onNativeLogin} onGuest={continueAsGuest} />
       ) : (
         <PhoneWrapper {...props} showNav={showNav} screen={screen} setScreen={setScreen}>
           <Toast toasts={toasts} />

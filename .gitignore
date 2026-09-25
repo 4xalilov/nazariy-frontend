@@ -22,3 +22,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Android imzo kalitlari hech qachon repoga tushmasin
+*.jks
+*.keystore
+android/keystore.properties

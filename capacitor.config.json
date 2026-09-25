@@ -1,0 +1,16 @@
+{
+  "appId": "uz.iquest.app",
+  "appName": "IQuest",
+  "webDir": "dist",
+  "android": {
+    "allowMixedContent": false,
+    "captureInput": true
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 800,
+      "backgroundColor": "#4F3FD0",
+      "showSpinner": false
+    }
+  }
+}

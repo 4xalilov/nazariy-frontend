@@ -1,0 +1,65 @@
+name: Android build
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main, 'claude/**']
+    paths: ['src/**', 'android/**', 'public/**', 'index.html', 'package.json', 'package-lock.json', 'capacitor.config.json', '.github/workflows/android.yml']
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      # Repo → Settings → Secrets and variables → Actions → Variables: VITE_API_URL (masalan https://api.iquest.uz)
+      VITE_API_URL: ${{ vars.VITE_API_URL }}
+      HAS_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE_BASE64 != '' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with: { node-version: 22, cache: npm }
+      - run: npm ci
+      - run: npm run build
+      - run: npx cap sync android
+
+      - uses: actions/setup-java@v4
+        with: { distribution: temurin, java-version: '21', cache: gradle }
+      - uses: android-actions/setup-android@v3
+      - run: sdkmanager "platforms;android-36" "build-tools;36.0.0"
+
+      - name: Versiya
+        run: |
+          echo "ANDROID_VERSION_CODE=$(( 100 + ${{ github.run_number }} ))" >> "$GITHUB_ENV"
+          echo "ANDROID_VERSION_NAME=$(node -p "require('./package.json').version")" >> "$GITHUB_ENV"
+
+      - name: Upload kalitini tiklash
+        if: env.HAS_KEYSTORE == 'true'
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          echo "ANDROID_KEYSTORE_FILE=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
+          echo "ANDROID_KEYSTORE_PASSWORD=${{ secrets.ANDROID_KEYSTORE_PASSWORD }}" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_ALIAS=${{ secrets.ANDROID_KEY_ALIAS }}" >> "$GITHUB_ENV"
+          echo "ANDROID_KEY_PASSWORD=${{ secrets.ANDROID_KEY_PASSWORD }}" >> "$GITHUB_ENV"
+
+      - name: Gradle build
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew --no-daemon assembleDebug
+          if [ "$HAS_KEYSTORE" = "true" ]; then ./gradlew --no-daemon bundleRelease assembleRelease; fi
+
+      - name: Debug APK (telefonda sinash uchun)
+        uses: actions/upload-artifact@v4
+        with:
+          name: iquest-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+
+      - name: Release AAB + APK (Play Console uchun)
+        if: env.HAS_KEYSTORE == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: iquest-release-${{ env.ANDROID_VERSION_NAME }}-${{ env.ANDROID_VERSION_CODE }}
+          path: |
+            android/app/build/outputs/bundle/release/*.aab
+            android/app/build/outputs/apk/release/*.apk
