@@ -4,6 +4,8 @@ import { useState, useEffect, useRef } from "react";
 const LANGS = {
   uz: {
     code:"uz", label:"O'zbekcha", flag:"🇺🇿",
+    keepPracticing:"Yaxshi urinish!",
+    services:"Xizmatlar", tipHint:"Bu strategiyani keyingi mashqda qo'llab ko'ring.", sectionsWord:"bo'lim",
     login:"Kirish", register:"Ro'yxatdan o'tish", phone:"Telefon raqam", password:"Parol",
     confirmPass:"Parolni tasdiqlang", forgotPass:"Parolni unutdingiz?",
     orWith:"yoki", googleLogin:"Google orqali kirish",
@@ -11,32 +13,32 @@ const LANGS = {
     name:"Ism", surname:"Familiya", createAccount:"Hisob yarating va o'rganishni boshlang",
     hello:"Assalomu alaykum,", home:"Bosh sahifa", todayResult:"Bugungi natija", allBtn:"Barchasi →",
     active:"Faollar", tests:"Testlar", rating:"Reyting",
-    tickets:"Biletlar", ticketsSub:"100 ta bilet", testsSub:"Cheksiz savol",
-    exam:"Imtihon", examSub:"Rasmiy test", stats:"Statistika", statsSub:"Natijalaringiz",
+    tickets:"To'plamlar", ticketsSub:"100 ta to'plam", testsSub:"Cheksiz jumboq",
+    exam:"IQ test", examSub:"15 daqiqalik test", stats:"Statistika", statsSub:"Natijalaringiz",
     ratingSub:"Top Natijalar", profile:"Profil", profileSub:"Sozlamalar",
     todayGoal:"Bugungi maqsad", lastActivity:"Oxirgi faoliyat",
-    allTickets:"100 ta bilet mavjud", bookmarked:"Saqlangan",
+    allTickets:"100 ta to'plam mavjud", bookmarked:"Saqlangan",
     allTab:"Barchasi", done:"Yakunlangan", undone:"Yakunlanmagan",
     questions:"ta savol", questionOf:"Savol",
     back:"Orqaga", next:"Keyingi", finish:"Tugatish", explanation:"Izoh", explanationTitle:"To'g'ri javob izohi", noExplanation:"Bu savol uchun izoh qo'shilmagan.",
     greatResult:"Zo'r natija!", failed:"Muvaffaqiyatsiz",
-    ticketDone:"yakunlandi", otherTicket:"Boshqa bilet tanlash", goHome:"Bosh sahifaga qaytish",
-    infiniteTest:"Cheksiz test", infiniteSub:"Barcha savollar aralash holda keladi", startTest:"Testni boshlash",
+    ticketDone:"yakunlandi", otherTicket:"Boshqa to'plam tanlash", goHome:"Bosh sahifaga qaytish",
+    infiniteTest:"Cheksiz mashq", infiniteSub:"Barcha turdagi jumboqlar aralash holda keladi", startTest:"Mashqni boshlash",
     currentSeries:"Joriy seriya", bestSeries:"Eng yaxshi seriya", rightAnswer:"to'g'ri javob",
     lastResults:"So'nggi natijalar", byTopic:"Mavzular bo'yicha", hardQ:"Qiyin savollar",
-    examTitle:"Imtihon", examReady:"Rasmiy imtihonga tayyorlik",
-    examRules:"Imtihon qoidalari",
-    rule1:"20 ta savol beriladi", rule2:"Har bir savolga 1 daqiqa",
-    rule3:"2 tadan ortiq xato bo'lsa imtihondan o'ta olmaysiz",
-    rule4:"Imtihon yakunida natija va statistika ko'rsatiladi",
-    questionCount:"Savollar", time:"Vaqt", errorLimit:"Xato limit",
-    startExam:"Imtihonni boshlash", question:"Savol", errors:"Xatolar",
-    congrats:"Tabriklaymiz! 🎉", examPassed:"Imtihondan muvaffaqiyatli o'tdingiz.",
-    examFailed:"Imtihondan o'ta olmadingiz", tooManyErrors:"tadan ortiq xato qayd etildi.",
+    examTitle:"IQ test", examReady:"Mantiqiy fikrlashingizni o'lchang",
+    examRules:"Test qoidalari",
+    rule1:"20 ta savol: sonlar, naqshlar, so'zlar va mantiq", rule2:"Umumiy vaqt — 15 daqiqa",
+    rule3:"Test davomida to'g'ri javoblar ko'rsatilmaydi",
+    rule4:"Yakunda taxminiy IQ oralig'ingiz ko'rsatiladi",
+    questionCount:"Savollar", time:"Vaqt", errorLimit:"Natija",
+    startExam:"Testni boshlash", question:"Savol", errors:"Javob berildi",
+    congrats:"Tabriklaymiz! 🎉", examPassed:"Test yakunlandi. Natijangiz tayyor.",
+    examFailed:"Vaqt tugadi", tooManyErrors:"ta savolga javob berilmadi.",
     correct:"To'g'ri javob", wrong:"Noto'g'ri javob", result:"Natija",
-    avgResult:"O'rtacha natija", examCount:"Imtihonlar soni",
-    passedExams:"O'tgan imtihonlar", failedExams:"O'tmagan imtihonlar",
-    retryExam:"Qayta urinish",
+    avgResult:"O'rtacha natija", examCount:"Topshirilgan testlar",
+    passedExams:"Eng yuqori natija", failedExams:"Oxirgi natija",
+    retryExam:"Qayta topshirish",
     statistics:"Statistika", general:"Umumiy", weekly:"Haftalik", monthly:"Oylik", yearly:"Yillik",
     totalQ:"Jami savollar", correctA:"To'g'ri javoblar", wrongA:"Noto'g'ri javoblar", correctPct:"To'g'ri foizi",
     resultsGraph:"Natijalar grafigi",
@@ -59,45 +61,48 @@ const LANGS = {
     referralHistory:"Taklif tarixi",
     referralPending:"Kutilmoqda",
     referralGifted:"Sovg'a berildi",
-    proTitle:"Nazariy PRO", proSubtitle:"Imtihonga eng yaxshi tayyorgarlik ko'ring",
+    proTitle:"IQuest PRO", proSubtitle:"Aqlingizni har kuni charxlang",
     proNoAds:"Reklama yo'q", proNoAdsSub:"Hech qanday reklama ko'rmaysiz",
-    proUnlimited:"Cheksiz testlar", proUnlimitedSub:"Barcha bilet va testlarga to'liq kirish",
+    proUnlimited:"Cheksiz testlar", proUnlimitedSub:"Barcha to'plam va testlarga to'liq kirish",
     proStats:"Batafsil statistika", proStatsSub:"Kuchli va zaif tomonlaringizni biling",
     proMonthly:"Oylik obuna", proCancel:"Istalgan vaqt bekor qilish mumkin",
     proSubscribe:"Obuna bo'lish", proSecure:"To'lov xavfsiz va himoyalangan", proChoosePay:"To'lov usulini tanlang",
     proWeekly:"Haftalik", proMonth1:"1 oylik", proMonth2:"2 oylik",
     proPopular:"Mashhur", proBest:"Tejamli",
-    exams:"Imtihonlar", passed:"O'tgan", notPassed:"O'tmagan",
+    exams:"IQ testlar", passed:"To'plamlar", notPassed:"Jumboqlar",
     darkMode:"Tungi rejim", lightMode:"Kunduzgi rejim",
     notifications:"Bildirishnomalar", notifEmpty:"Bildirishnomalar yo'q",
     notifAll:"Barchasi", notifUnread:"O'qilmagan",
     markAllRead:"Barchasini o'qilgan deb belgilash",
     notifSettings:"Bildirishnoma sozlamalari",
     notifDaily:"Kunlik eslatma", notifResult:"Natija haqida",
-    notifNew:"Yangi bilet", notifExam:"Imtihon eslatmasi",
+    notifNew:"Yangi to'plam", notifExam:"Test eslatmasi",
     notifOn:"Yoqilgan", notifOff:"O'chirilgan",
     justNow:"Hozir", minsAgo:"daqiqa oldin", hoursAgo:"soat oldin",
     savedQ:"Saqlanganlar", savedEmpty:"Hali saqlanganlar yo'q",
     savedSub:"Savollarni bookmark qilib saqlang",
     savedCount:"ta saqlangan savol", removeBookmark:"Olib tashlash",
-    practiceAll:"Hammasini mashq qilish", ticket:"Bilet",
+    practiceAll:"Hammasini mashq qilish", ticket:"To'plam",
     bookmarkAdded:"Savol saqlandi!", bookmarkRemoved:"Savol o'chirildi",
     skip:"O'tkazib yuborish", getStarted:"Boshlash", continue:"Davom etish",
-    ob1Title:"Nazariy bilan o'rganin!",   ob1Sub:"100 ta bilet va minglab savollar orqali haydovchilik imtihoniga tayyorlaning.",
-    ob2Title:"Bilet va testlar",           ob2Sub:"Har bir biletda 20 ta savol. Cheksiz test rejimi bilan bilimingizni sinab ko'ring.",
-    ob3Title:"Imtihon rejimi",             ob3Sub:"Rasmiy imtihon sharoitida mashq qiling. Xato limitiga rioya qilib, natijangizni oshiring.",
-    ob4Title:"Natija va reyting",          ob4Sub:"O'z natijangizni kuzating, reyting jadvalida o'z o'rningizni toping!",
-    search:"Qidirish", searchPlaceholder:"Bilet, savol yoki mavzu...",
+    ob1Title:"IQuest bilan aqlingizni sinang!",   ob1Sub:"Minglab mantiqiy jumboqlar orqali fikrlash qobiliyatingizni rivojlantiring.",
+    ob2Title:"To'plam va mashqlar",           ob2Sub:"Har bir to'plamda 20 ta jumboq. Cheksiz mashq rejimida o'zingizni sinab ko'ring.",
+    ob3Title:"IQ test",             ob3Sub:"15 daqiqalik testni topshiring va taxminiy IQ oralig'ingizni bilib oling.",
+    ob4Title:"Natija va reyting",          ob4Sub:"O'sishingizni kuzating, reyting jadvalida o'z o'rningizni toping!",
+    search:"Qidirish", searchPlaceholder:"To'plam, savol yoki bo'lim...",
     searchResults:"Natijalar", noResults:"Hech narsa topilmadi",
-    filterAll:"Barchasi", filterTickets:"Biletlar", filterQuestions:"Savollar",
-    searchHint:"Bilet raqami yoki kalit so'z kiriting",
-    topics:"Mavzular", topicsSub:"Bo'limlar bo'yicha o'rganish",
-    rules:"Yo'l Qoidalari", rulesSub:"PBX qoidalari",
-    topicsTitle:"Mavzular bo'yicha o'rganish",
-    rulesTitle:"Yo'l Harakati Qoidalari",
+    filterAll:"Barchasi", filterTickets:"To'plamlar", filterQuestions:"Savollar",
+    searchHint:"To'plam raqami yoki kalit so'z kiriting",
+    topics:"Bo'limlar", topicsSub:"Jumboq turlari bo'yicha mashq",
+    rules:"Qo'llanma", rulesSub:"Yechish strategiyalari",
+    topicsTitle:"Bo'limlar bo'yicha mashq",
+    rulesTitle:"Jumboq yechish qo'llanmasi",
+    iqBand:"Taxminiy IQ oralig'i", iqPercentile:"Har 100 kishidan taxminan {p} nafaridan yuqori", iqProvisional:"Dastlabki me'yorlar", free:"Bepul", answered:"Javob berildi", strategies:"ta strategiya",
   },
   ru: {
     code:"ru", label:"Русский", flag:"🇷🇺",
+    keepPracticing:"Хорошая попытка!",
+    services:"Сервисы", tipHint:"Попробуйте применить эту стратегию в следующей практике.", sectionsWord:"разделов",
     login:"Войти", register:"Регистрация", phone:"Номер телефона", password:"Пароль",
     confirmPass:"Подтвердите пароль", forgotPass:"Забыли пароль?",
     orWith:"или", googleLogin:"Войти через Google",
@@ -105,77 +110,80 @@ const LANGS = {
     name:"Имя", surname:"Фамилия", createAccount:"Создайте аккаунт и начните обучение",
     hello:"Здравствуйте,", home:"Главная", todayResult:"Сегодняшний результат", allBtn:"Все →",
     active:"Активность", tests:"Тесты", rating:"Рейтинг",
-    tickets:"Билеты", ticketsSub:"100 билетов", testsSub:"Без ограничений",
-    exam:"Экзамен", examSub:"Официальный тест", stats:"Статистика", statsSub:"Ваши результаты",
+    tickets:"Наборы", ticketsSub:"100 наборов", testsSub:"Без ограничений",
+    exam:"IQ-тест", examSub:"Тест на 15 минут", stats:"Статистика", statsSub:"Ваши результаты",
     ratingSub:"Топ результаты", profile:"Профиль", profileSub:"Настройки",
     todayGoal:"Цель на сегодня", lastActivity:"Последняя активность",
-    allTickets:"100 билетов доступно", bookmarked:"Сохранённые",
+    allTickets:"Доступно 100 наборов", bookmarked:"Сохранённые",
     allTab:"Все", done:"Завершённые", undone:"Незавершённые",
     questions:"вопросов", questionOf:"Вопрос",
     back:"Назад", next:"Далее", finish:"Завершить", explanation:"Пояснение", explanationTitle:"Пояснение к правильному ответу", noExplanation:"Пояснение не добавлено.",
     greatResult:"Отличный результат!", failed:"Не сдано",
-    ticketDone:"завершён", otherTicket:"Выбрать другой билет", goHome:"На главную",
-    infiniteTest:"Бесконечный тест", infiniteSub:"Все вопросы в случайном порядке", startTest:"Начать тест",
+    ticketDone:"завершён", otherTicket:"Выбрать другой набор", goHome:"На главную",
+    infiniteTest:"Бесконечная практика", infiniteSub:"Задачи всех типов в случайном порядке", startTest:"Начать практику",
     currentSeries:"Текущая серия", bestSeries:"Лучшая серия", rightAnswer:"правильных",
     lastResults:"Последние результаты", byTopic:"По темам", hardQ:"Сложные вопросы",
-    examTitle:"Экзамен", examReady:"Подготовка к официальному экзамену",
-    examRules:"Правила экзамена",
-    rule1:"Даётся 20 вопросов", rule2:"1 минута на каждый вопрос",
-    rule3:"Более 2 ошибок — экзамен не сдан",
-    rule4:"В конце показывается результат и статистика",
-    questionCount:"Вопросы", time:"Время", errorLimit:"Лимит ошибок",
-    startExam:"Начать экзамен", question:"Вопрос", errors:"Ошибки",
-    congrats:"Поздравляем! 🎉", examPassed:"Вы успешно сдали экзамен.",
-    examFailed:"Экзамен не сдан", tooManyErrors:"ошибок зафиксировано.",
+    examTitle:"IQ-тест", examReady:"Измерьте своё логическое мышление",
+    examRules:"Правила теста",
+    rule1:"20 вопросов: числа, закономерности, слова и логика", rule2:"Общее время — 15 минут",
+    rule3:"Во время теста правильные ответы не показываются",
+    rule4:"В конце показывается примерный диапазон IQ",
+    questionCount:"Вопросы", time:"Время", errorLimit:"Результат",
+    startExam:"Начать тест", question:"Вопрос", errors:"Отвечено",
+    congrats:"Поздравляем! 🎉", examPassed:"Тест завершён. Ваш результат готов.",
+    examFailed:"Время вышло", tooManyErrors:"вопросов без ответа.",
     correct:"Правильных", wrong:"Неправильных", result:"Результат",
-    avgResult:"Средний результат", examCount:"Всего экзаменов",
-    passedExams:"Сданных", failedExams:"Не сданных",
-    retryExam:"Попробовать снова",
+    avgResult:"Средний результат", examCount:"Пройдено тестов",
+    passedExams:"Лучший результат", failedExams:"Последний результат",
+    retryExam:"Пройти снова",
     statistics:"Статистика", general:"Общий", weekly:"Недельный", monthly:"Месячный", yearly:"Годовой",
     totalQ:"Всего вопросов", correctA:"Правильных ответов", wrongA:"Неправильных ответов", correctPct:"Процент правильных",
     resultsGraph:"График результатов",
     ratingTitle:"Рейтинг", daily:"Ежедневный",
-    certs:"Мои сертификаты", settings:"Настройки", lang:"Язык", about:"О нас", news:"Yangiliklar kanali", logout:"Выйти",
+    certs:"Мои сертификаты", settings:"Настройки", lang:"Язык", about:"О нас", news:"Новости", logout:"Выйти",
     pro:"Pro подписка", support:"Поддержка", share:"Поделиться",
-    proTitle:"Nazariy PRO", proSubtitle:"Лучшая подготовка к экзамену",
+    proTitle:"IQuest PRO", proSubtitle:"Тренируйте ум каждый день",
     proNoAds:"Без рекламы", proNoAdsSub:"Никакой рекламы",
-    proUnlimited:"Безлимитные тесты", proUnlimitedSub:"Полный доступ ко всем билетам",
+    proUnlimited:"Безлимитные тесты", proUnlimitedSub:"Полный доступ ко всем наборам и тестам",
     proStats:"Подробная статистика", proStatsSub:"Узнайте свои сильные и слабые стороны",
     proMonthly:"Ежемесячная подписка", proCancel:"Отмена в любое время",
     proSubscribe:"Подписаться", proSecure:"Безопасная оплата", proChoosePay:"Выберите способ оплаты",
     proWeekly:"Недельный", proMonth1:"1 месяц", proMonth2:"2 месяца",
     proPopular:"Популярный", proBest:"Выгодный",
-    exams:"Экзамены", passed:"Сдано", notPassed:"Не сдано",
+    exams:"IQ-тесты", passed:"Наборы", notPassed:"Задачи",
     darkMode:"Тёмный режим", lightMode:"Светлый режим",
     notifications:"Уведомления", notifEmpty:"Нет уведомлений",
     notifAll:"Все", notifUnread:"Непрочитанные",
     markAllRead:"Отметить все прочитанными",
     notifSettings:"Настройки уведомлений",
     notifDaily:"Ежедневное напоминание", notifResult:"О результатах",
-    notifNew:"Новый билет", notifExam:"Напоминание об экзамене",
+    notifNew:"Новый набор", notifExam:"Напоминание о тесте",
     notifOn:"Включено", notifOff:"Выключено",
     justNow:"Только что", minsAgo:"мин. назад", hoursAgo:"ч. назад",
     savedQ:"Сохранённые", savedEmpty:"Нет сохранённых вопросов",
     savedSub:"Сохраняйте вопросы с помощью закладок",
     savedCount:"сохранённых вопросов", removeBookmark:"Удалить",
-    practiceAll:"Практиковать все", ticket:"Билет",
+    practiceAll:"Практиковать все", ticket:"Набор",
     bookmarkAdded:"Вопрос сохранён!", bookmarkRemoved:"Вопрос удалён",
     skip:"Пропустить", getStarted:"Начать", continue:"Продолжить",
-    ob1Title:"Учитесь с Nazariy!",        ob1Sub:"Готовьтесь к экзамену по вождению с 100 билетами и тысячами вопросов.",
-    ob2Title:"Билеты и тесты",             ob2Sub:"20 вопросов в каждом билете. Режим бесконечного теста для тренировки.",
-    ob3Title:"Режим экзамена",             ob3Sub:"Тренируйтесь в условиях официального экзамена. Следите за лимитом ошибок.",
-    ob4Title:"Результаты и рейтинг",       ob4Sub:"Отслеживайте свои результаты и найдите своё место в таблице лидеров!",
-    search:"Поиск", searchPlaceholder:"Билет, вопрос или тема...",
+    ob1Title:"Проверьте свой ум с IQuest!",        ob1Sub:"Развивайте мышление с помощью тысяч логических задач.",
+    ob2Title:"Наборы и практика",             ob2Sub:"20 задач в каждом наборе. Проверьте себя в режиме бесконечной практики.",
+    ob3Title:"IQ-тест",             ob3Sub:"Пройдите 15-минутный тест и узнайте свой примерный диапазон IQ.",
+    ob4Title:"Результаты и рейтинг",       ob4Sub:"Следите за своим ростом и найдите своё место в таблице лидеров!",
+    search:"Поиск", searchPlaceholder:"Набор, вопрос или раздел...",
     searchResults:"Результаты", noResults:"Ничего не найдено",
-    filterAll:"Все", filterTickets:"Билеты", filterQuestions:"Вопросы",
-    searchHint:"Введите номер билета или ключевое слово",
-    topics:"Темы", topicsSub:"Учёба по разделам",
-    rules:"ПДД", rulesSub:"Правила дорожного движения",
-    topicsTitle:"Темы для изучения",
-    rulesTitle:"Правила дорожного движения",
+    filterAll:"Все", filterTickets:"Наборы", filterQuestions:"Вопросы",
+    searchHint:"Введите номер набора или ключевое слово",
+    topics:"Разделы", topicsSub:"Практика по типам задач",
+    rules:"Руководство", rulesSub:"Стратегии решения",
+    topicsTitle:"Практика по разделам",
+    rulesTitle:"Как решать задачи",
+    iqBand:"Примерный диапазон IQ", iqPercentile:"Выше, чем примерно у {p} из 100 человек", iqProvisional:"Предварительные нормы", free:"Бесплатно", answered:"Отвечено", strategies:"стратегий",
   },
   kril: {
     code:"kril", label:"Ўзбекча", flag:"🇺🇿",
+    keepPracticing:"Яхши уриниш!",
+    services:"Хизматлар", tipHint:"Бу стратегияни кейинги машқда қўллаб кўринг.", sectionsWord:"бўлим",
     login:"Кириш", register:"Рўйхатдан ўтиш", phone:"Телефон рақам", password:"Парол",
     confirmPass:"Паролни тасдиқланг", forgotPass:"Паролни унутдингизми?",
     orWith:"ёки", googleLogin:"Google орқали кириш",
@@ -183,99 +191,101 @@ const LANGS = {
     name:"Исм", surname:"Фамилия", createAccount:"Ҳисоб яратинг ва ўрганишни бошланг",
     hello:"Ассалому алайкум,", home:"Бош саҳифа", todayResult:"Бугунги натижа", allBtn:"Барчаси →",
     active:"Фаоллар", tests:"Тестлар", rating:"Рейтинг",
-    tickets:"Билетлар", ticketsSub:"100 та билет", testsSub:"Чексиз савол",
-    exam:"Имтиҳон", examSub:"Расмий тест", stats:"Статистика", statsSub:"Натижаларингиз",
+    tickets:"Тўпламлар", ticketsSub:"100 та тўплам", testsSub:"Чексиз жумбоқ",
+    exam:"IQ тест", examSub:"15 дақиқалик тест", stats:"Статистика", statsSub:"Натижаларингиз",
     ratingSub:"Топ Натижалар", profile:"Профил", profileSub:"Созламалар",
     todayGoal:"Бугунги мақсад", lastActivity:"Охирги фаолият",
-    allTickets:"100 та билет мавжуд", bookmarked:"Сақланган",
+    allTickets:"100 та тўплам мавжуд", bookmarked:"Сақланган",
     allTab:"Барчаси", done:"Якунланган", undone:"Якунланмаган",
     questions:"та савол", questionOf:"Савол",
     back:"Орқага", next:"Кейинги", finish:"Тугатиш", explanation:"Изоҳ", explanationTitle:"Тўғри жавоб изоҳи", noExplanation:"Бу савол учун изоҳ қўшилмаган.",
     greatResult:"Зўр натижа!", failed:"Муваффақиятсиз",
-    ticketDone:"якунланди", otherTicket:"Бошқа билет танлаш", goHome:"Бош саҳифага қайтиш",
-    infiniteTest:"Чексиз тест", infiniteSub:"Барча саволлар аралаш ҳолда келади", startTest:"Тестни бошлаш",
+    ticketDone:"якунланди", otherTicket:"Бошқа тўплам танлаш", goHome:"Бош саҳифага қайтиш",
+    infiniteTest:"Чексиз машқ", infiniteSub:"Барча турдаги жумбоқлар аралаш ҳолда келади", startTest:"Машқни бошлаш",
     currentSeries:"Жорий серия", bestSeries:"Энг яхши серия", rightAnswer:"тўғри жавоб",
     lastResults:"Сўнгги натижалар", byTopic:"Мавзулар бўйича", hardQ:"Қийин саволлар",
-    examTitle:"Имтиҳон", examReady:"Расмий имтиҳонга тайёрлик",
-    examRules:"Имтиҳон қоидалари",
-    rule1:"20 та савол берилади", rule2:"Ҳар бир саволга 1 дақиқа",
-    rule3:"2 тадан ортиқ хато бўлса имтиҳондан ўта олмайсиз",
-    rule4:"Имтиҳон якунида натижа ва статистика кўрсатилади",
-    questionCount:"Саволлар", time:"Вақт", errorLimit:"Хато лимит",
-    startExam:"Имтиҳонни бошлаш", question:"Савол", errors:"Хатолар",
-    congrats:"Табрикlaймиз! 🎉", examPassed:"Имтиҳондан муваффақиятли ўтдингиз.",
-    examFailed:"Имтиҳондан ўта олмадингиз", tooManyErrors:"тадан ортиқ хато қайд этилди.",
+    examTitle:"IQ тест", examReady:"Мантиқий фикрлашингизни ўлчанг",
+    examRules:"Тест қоидалари",
+    rule1:"20 та савол: сонлар, нақшлар, сўзлар ва мантиқ", rule2:"Умумий вақт — 15 дақиқа",
+    rule3:"Тест давомида тўғри жавоблар кўрсатилмайди",
+    rule4:"Якунда тахминий IQ оралиғингиз кўрсатилади",
+    questionCount:"Саволлар", time:"Вақт", errorLimit:"Натижа",
+    startExam:"Тестни бошлаш", question:"Савол", errors:"Жавоб берилди",
+    congrats:"Табрикlaймиз! 🎉", examPassed:"Тест якунланди. Натижангиз тайёр.",
+    examFailed:"Вақт тугади", tooManyErrors:"та саволга жавоб берилмади.",
     correct:"Тўғри жавоб", wrong:"Нотўғри жавоб", result:"Натижа",
-    avgResult:"Ўртача натижа", examCount:"Имтиҳонлар сони",
-    passedExams:"Ўтган имтиҳонлар", failedExams:"Ўтмаган имтиҳонлар",
-    retryExam:"Қайта уриниш",
+    avgResult:"Ўртача натижа", examCount:"Топширилган тестлар",
+    passedExams:"Энг юқори натижа", failedExams:"Охирги натижа",
+    retryExam:"Қайта топшириш",
     statistics:"Статистика", general:"Умумий", weekly:"Ҳафталик", monthly:"Ойлик", yearly:"Йиллик",
     totalQ:"Жами саволлар", correctA:"Тўғри жавоблар", wrongA:"Нотўғри жавоблар", correctPct:"Тўғри фоизи",
     resultsGraph:"Натижалар графиги",
     ratingTitle:"Рейтинг", daily:"Кунлик",
     certs:"Сертификатларим", settings:"Созламалар", lang:"Тил", about:"Биз ҳақимизда", news:"Янгиликлар", logout:"Чиқиш",
     pro:"Pro обуна", support:"Қўллаб-қувватлаш", share:"Улашиш",
-    proTitle:"Nazariy PRO", proSubtitle:"Имтиҳонга энг яхши тайёргарлик кўринг",
+    proTitle:"IQuest PRO", proSubtitle:"Ақлингизни ҳар куни чархланг",
     proNoAds:"Реклама йўқ", proNoAdsSub:"Ҳеч қандай реклама кўрмайсиз",
-    proUnlimited:"Чексиз тестлар", proUnlimitedSub:"Барча билет ва тестларга тўлиқ кириш",
+    proUnlimited:"Чексиз тестлар", proUnlimitedSub:"Барча тўплам ва тестларга тўлиқ кириш",
     proStats:"Батафсил статистика", proStatsSub:"Кучли ва заиф томонларингизни билинг",
     proMonthly:"Ойлик обуна", proCancel:"Истаган вақт бекор қилиш мумкин",
     proSubscribe:"Обуна бўлиш", proSecure:"Тўлов хавфсиз ва ҳимояланган", proChoosePay:"Тўлов усулини танланг",
     proWeekly:"Ҳафталик", proMonth1:"1 ойлик", proMonth2:"2 ойлик",
     proPopular:"Машҳур", proBest:"Тежамли",
-    exams:"Имтиҳонлар", passed:"Ўтган", notPassed:"Ўтмаган",
+    exams:"IQ тестлар", passed:"Тўпламлар", notPassed:"Жумбоқлар",
     darkMode:"Тунги режим", lightMode:"Кундузги режим",
     notifications:"Билдиришномалар", notifEmpty:"Билдиришномалар йўқ",
     notifAll:"Барчаси", notifUnread:"Ўқилмаган",
     markAllRead:"Барчасини ўқилган деб белгилаш",
     notifSettings:"Билдиришнома созламалари",
     notifDaily:"Кунлик эслатма", notifResult:"Натижа ҳақида",
-    notifNew:"Янги билет", notifExam:"Имтиҳон эслатмаси",
+    notifNew:"Янги тўплам", notifExam:"Тест эслатмаси",
     notifOn:"Ёқилган", notifOff:"Ўчирилган",
     justNow:"Ҳозир", minsAgo:"дақиқа олдин", hoursAgo:"соат олдин",
     savedQ:"Сақланганлар", savedEmpty:"Ҳали сақланган савол йўқ",
     savedSub:"Саволларни bookmark қилиб сақланг",
     savedCount:"та сақланган савол", removeBookmark:"Олиб ташлаш",
-    practiceAll:"Ҳамасини машқ қилиш", ticket:"Билет",
+    practiceAll:"Ҳамасини машқ қилиш", ticket:"Тўплам",
     bookmarkAdded:"Савол сақланди!", bookmarkRemoved:"Савол ўчирилди",
     skip:"Ўтказиб юбориш", getStarted:"Бошлаш", continue:"Давом этиш",
-    ob1Title:"Назарий билан ўрганинг!",   ob1Sub:"100 та билет ва минглаб саволлар орқали ҳайдовчилик имтиҳонига тайёрланинг.",
-    ob2Title:"Билет ва тестлар",           ob2Sub:"Ҳар бир билетда 20 та савол. Чексиз тест режими билан билимингизни синаб кўринг.",
-    ob3Title:"Имтиҳон режими",             ob3Sub:"Расмий имтиҳон шароитида машқ қилинг. Хато лимитига риоя қилиб, натижангизни оширинг.",
-    ob4Title:"Натижа ва рейтинг",          ob4Sub:"Ўз натижангизни кузатинг, рейтинг жадвалида ўз ўрнингизни топинг!",
-    search:"Қидириш", searchPlaceholder:"Билет, савол ёки мавзу...",
+    ob1Title:"IQuest билан ақлингизни синанг!",   ob1Sub:"Минглаб мантиқий жумбоқлар орқали фикрлаш қобилиятингизни ривожлантиринг.",
+    ob2Title:"Тўплам ва машқлар",           ob2Sub:"Ҳар бир тўпламда 20 та жумбоқ. Чексиз машқ режимида ўзингизни синаб кўринг.",
+    ob3Title:"IQ тест",             ob3Sub:"15 дақиқалик тестни топширинг ва тахминий IQ оралиғингизни билиб олинг.",
+    ob4Title:"Натижа ва рейтинг",          ob4Sub:"Ўсишингизни кузатинг, рейтинг жадвалида ўз ўрнингизни топинг!",
+    search:"Қидириш", searchPlaceholder:"Тўплам, савол ёки бўлим...",
     searchResults:"Натижалар", noResults:"Ҳеч нарса топилмади",
-    filterAll:"Барчаси", filterTickets:"Билетлар", filterQuestions:"Саволлар",
-    searchHint:"Билет рақами ёки калит сўз киритинг",
-    topics:"Мавзулар", topicsSub:"Бўлимлар бўйича ўрганиш",
-    rules:"Йўл Қоидалари", rulesSub:"ЙҲҚ қоидалари",
-    topicsTitle:"Мавзулар бўйича ўрганиш",
-    rulesTitle:"Йўл Ҳаракати Қоидалари",
+    filterAll:"Барчаси", filterTickets:"Тўпламлар", filterQuestions:"Саволлар",
+    searchHint:"Тўплам рақами ёки калит сўз киритинг",
+    topics:"Бўлимлар", topicsSub:"Жумбоқ турлари бўйича машқ",
+    rules:"Қўлланма", rulesSub:"Ечиш стратегиялари",
+    topicsTitle:"Бўлимлар бўйича машқ",
+    rulesTitle:"Жумбоқ ечиш қўлланмаси",
+    iqBand:"Тахминий IQ оралиғи", iqPercentile:"Ҳар 100 кишидан тахминан {p} нафаридан юқори", iqProvisional:"Дастлабки меъёрлар", free:"Бепул", answered:"Жавоб берилди", strategies:"та стратегия",
   }
 };
 
 // ─── THEMES ───
 function getTheme(dark) {
+  // IQuest "Siyoh" mavzusi — DESIGN.md §3 qiymatlari
   return dark ? {
-    primary:"#3B82F6", primaryDark:"#2563EB",
-    success:"#22C55E", danger:"#EF4444", warning:"#F59E0B",
-    bg:"#0F172A", white:"#1E293B", card:"#1E293B", cardBorder:"#334155",
-    gray100:"#1E293B", gray200:"#334155", gray300:"#475569",
-    gray400:"#64748B", gray600:"#94A3B8", gray800:"#F1F5F9",
-    text:"#F1F5F9", subtext:"#94A3B8", muted:"#64748B",
-    navBg:"#1E293B", inputBg:"#0F172A",
-    gradStart:"#1E3A5F", gradEnd:"#1E40AF",
-    primary_light:"#3B82F622",
+    primary:"#9C90FF", primaryDark:"#B3A9FF",
+    success:"#5FD3A6", danger:"#FF8A8F", warning:"#F2C46B",
+    bg:"#121120", white:"#1B1A2B", card:"#1B1A2B", cardBorder:"#34324A",
+    gray100:"#242338", gray200:"#34324A", gray300:"#45425E",
+    gray400:"#7A7696", gray600:"#A4A1BA", gray800:"#F1F0FA",
+    text:"#F1F0FA", subtext:"#A4A1BA", muted:"#7A7696",
+    navBg:"#1B1A2B", inputBg:"#121120",
+    gradStart:"#26224A", gradEnd:"#6B5CF0",
+    primary_light:"#9C90FF22",
   } : {
-    primary:"#1A6BFF", primaryDark:"#1250CC",
-    success:"#22C55E", danger:"#EF4444", warning:"#F59E0B",
-    bg:"#F0F4FF", white:"#FFFFFF", card:"#FFFFFF", cardBorder:"transparent",
-    gray100:"#F8FAFC", gray200:"#E2E8F0", gray300:"#CBD5E1",
-    gray400:"#94A3B8", gray600:"#64748B", gray800:"#1E293B",
-    text:"#1E293B", subtext:"#64748B", muted:"#94A3B8",
-    navBg:"#FFFFFF", inputBg:"#F8FAFC",
-    gradStart:"#1A6BFF", gradEnd:"#3B82F6",
-    primary_light:"#1A6BFF18",
+    primary:"#4F3FD0", primaryDark:"#3F31B0",
+    success:"#077350", danger:"#B42F35", warning:"#8A5A00",
+    bg:"#F5F4FB", white:"#FFFFFF", card:"#FFFFFF", cardBorder:"transparent",
+    gray100:"#EEECF7", gray200:"#DEDBEA", gray300:"#CFCBE0",
+    gray400:"#7F7B96", gray600:"#5E5B72", gray800:"#1D1B2E",
+    text:"#1D1B2E", subtext:"#5E5B72", muted:"#7F7B96",
+    navBg:"#FFFFFF", inputBg:"#F5F4FB",
+    gradStart:"#4F3FD0", gradEnd:"#6B5CF0",
+    primary_light:"#4F3FD018",
   };
 }
 
@@ -348,6 +358,15 @@ const IC = {
   Ticket2:    ({size=20,color="#94A3B8"})=><svg width={size} height={size} viewBox="0 0 24 24" fill="none"><path d="M3 9a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v1.5a1.5 1.5 0 0 0 0 3V15a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-1.5a1.5 1.5 0 0 0 0-3V9z" stroke={color} strokeWidth="2"/></svg>,
   Stats:      ({size=20,color="#94A3B8"})=><svg width={size} height={size} viewBox="0 0 24 24" fill="none"><line x1="18" y1="20" x2="18" y2="10" stroke={color} strokeWidth="2" strokeLinecap="round"/><line x1="12" y1="20" x2="12" y2="4" stroke={color} strokeWidth="2" strokeLinecap="round"/><line x1="6" y1="20" x2="6" y2="14" stroke={color} strokeWidth="2" strokeLinecap="round"/></svg>,
   GraduationCap2: ({size=20,color="#94A3B8"})=><svg width={size} height={size} viewBox="0 0 24 24" fill="none"><path d="M22 10v6M2 10l10-5 10 5-10 5z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M6 12v5c0 2 2 3 6 3s6-1 6-3v-5" stroke={color} strokeWidth="2" strokeLinecap="round"/></svg>,
+  Brain: ({size=20,color="#94A3B8"})=><svg width={size} height={size} viewBox="0 0 24 24" fill="none"><path d="M9.5 3A2.5 2.5 0 0 0 7 5.5v.1A3 3 0 0 0 4.5 10a3 3 0 0 0 .6 4.9A3 3 0 0 0 9 19.5a2.5 2.5 0 0 0 3 .4V4.1A2.5 2.5 0 0 0 9.5 3zM14.5 3A2.5 2.5 0 0 1 17 5.5v.1a3 3 0 0 1 2.5 4.4 3 3 0 0 1-.6 4.9 3 3 0 0 1-3.9 4.6 2.5 2.5 0 0 1-3-.4" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  Hash: ({size=20,color="#94A3B8"})=><svg width={size} height={size} viewBox="0 0 24 24" fill="none"><path d="M4 9h16M4 15h16M10 3L8 21M16 3l-2 18" stroke={color} strokeWidth="2" strokeLinecap="round"/></svg>,
+  Grid: ({size=20,color="#94A3B8"})=><svg width={size} height={size} viewBox="0 0 24 24" fill="none"><rect x="3" y="3" width="7" height="7" rx="1.5" stroke={color} strokeWidth="2"/><rect x="14" y="3" width="7" height="7" rx="1.5" stroke={color} strokeWidth="2"/><rect x="3" y="14" width="7" height="7" rx="1.5" stroke={color} strokeWidth="2"/><rect x="14" y="14" width="7" height="7" rx="1.5" stroke={color} strokeWidth="2" strokeDasharray="3 2"/></svg>,
+  Words: ({size=20,color="#94A3B8"})=><svg width={size} height={size} viewBox="0 0 24 24" fill="none"><path d="M4 7V5h16v2M9 19h6M12 5v14" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
+  Logic: ({size=20,color="#94A3B8"})=><svg width={size} height={size} viewBox="0 0 24 24" fill="none"><circle cx="6" cy="6" r="2.5" stroke={color} strokeWidth="2"/><circle cx="6" cy="18" r="2.5" stroke={color} strokeWidth="2"/><circle cx="18" cy="12" r="2.5" stroke={color} strokeWidth="2"/><path d="M8.5 6h2a3 3 0 0 1 3 3v0a3 3 0 0 0 2 2.8M8.5 18h2a3 3 0 0 0 3-3v0a3 3 0 0 1 2-2.8" stroke={color} strokeWidth="2" strokeLinecap="round"/></svg>,
+  Cube: ({size=20,color="#94A3B8"})=><svg width={size} height={size} viewBox="0 0 24 24" fill="none"><path d="M12 2l9 5v10l-9 5-9-5V7l9-5z" stroke={color} strokeWidth="2" strokeLinejoin="round"/><path d="M3 7l9 5 9-5M12 12v10" stroke={color} strokeWidth="2" strokeLinejoin="round"/></svg>,
+  Target: ({size=20,color="#94A3B8"})=><svg width={size} height={size} viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke={color} strokeWidth="2"/><circle cx="12" cy="12" r="5" stroke={color} strokeWidth="2"/><circle cx="12" cy="12" r="1.5" fill={color}/></svg>,
+  Zap: ({size=20,color="#94A3B8"})=><svg width={size} height={size} viewBox="0 0 24 24" fill="none"><path d="M13 2L4 14h7l-1 8 9-12h-7l1-8z" stroke={color} strokeWidth="2" strokeLinejoin="round"/></svg>,
+  Lightbulb: ({size=20,color="#94A3B8"})=><svg width={size} height={size} viewBox="0 0 24 24" fill="none"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   TelegramIcon: ({size=20,color="#94A3B8"})=><svg width={size} height={size} viewBox="0 0 24 24" fill="none"><path d="M21.198 2.433a2.242 2.242 0 0 0-1.022.215l-16.5 7a2.25 2.25 0 0 0 .126 4.198l3.938 1.317 1.49 4.47a2.25 2.25 0 0 0 3.916.605l1.9-2.534 3.96 2.64a2.25 2.25 0 0 0 3.372-1.612l2-14a2.25 2.25 0 0 0-3.18-2.3z" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/><path d="M10.5 14l-2-6.5 9-5" stroke={color} strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>,
   PaymePay: ({size=24,color="#94A3B8"})=><svg width={size} height={size} viewBox="0 0 24 24" fill="none"><rect x="6" y="2" width="12" height="20" rx="3" stroke={color} strokeWidth="2"/><path d="M10 6h4" stroke={color} strokeWidth="2" strokeLinecap="round"/><circle cx="12" cy="17" r="1.5" fill={color}/><path d="M9 11h6" stroke={color} strokeWidth="1.5" strokeLinecap="round"/><path d="M10 13.5h4" stroke={color} strokeWidth="1.5" strokeLinecap="round"/></svg>,
 };
@@ -382,7 +401,8 @@ const LIMITS = {
 
 
 // ─── BACKEND API ───
-const API_URL = "https://nazariy-backend.onrender.com";
+// IQuest backend manzili .env orqali beriladi (VITE_API_URL). Bo'sh bo'lsa — offline rejim.
+const API_URL = import.meta.env.VITE_API_URL || "";
 
 // API helper funksiyalar
 async function apiGet(endpoint, token) {
@@ -411,14 +431,15 @@ async function apiPost(endpoint, data, token) {
 
 // ─── APP KONFIGURATSIYASI (admin tomonidan boshqariladi) ───
 const APP_CONFIG = {
-  supportUsername: "nazariy_support",   // Telegram support username (@siz)
-  newsChannel: "nazariy_avtotest",      // Telegram kanal username
+  supportUsername: "iquest_support",    // Telegram support username (@siz)
+  newsChannel: "iquest_uz",             // Telegram kanal username
+  botUsername: "iquest_bot",            // Telegram bot username
   aboutText: {
-    uz: "Nazariy — O'zbekiston haydovchilik guvohnomasi olish uchun nazariy imtihonga tayyorgarlik ko'rish ilovasi. 100 ta rasmiy bilet, testlar va imtihon rejimlari.",
-    ru: "Nazariy — приложение для подготовки к теоретическому экзамену на водительские права в Узбекистане. 100 официальных билетов, тесты и режим экзамена.",
-    kril: "Назарий — Ўзбекистон ҳайдовчилик гувоҳномаси олиш учун назарий имтиҳонга тайёргарлик кўриш иловаси.",
+    uz: "IQuest — mantiqiy fikrlashni o'lchash va rivojlantirish ilovasi. Sonlar, naqshlar, so'zlar va fazoviy tasavvur bo'yicha jumboqlar, mashq to'plamlari va 15 daqiqalik IQ test.",
+    ru: "IQuest — приложение для измерения и развития логического мышления. Задачи на числа, закономерности, слова и пространственное мышление, наборы для практики и 15-минутный IQ-тест.",
+    kril: "IQuest — мантиқий фикрлашни ўлчаш ва ривожлантириш иловаси. Сонлар, нақшлар, сўзлар ва фазовий тасаввур бўйича жумбоқлар, машқ тўпламлари ва 15 дақиқалик IQ тест.",
   },
-  version: "2.0.0",
+  version: "1.0.0",
 };
 
 // ─── CHEGIRMA KONFIGURATSIYASI ───
@@ -443,7 +464,7 @@ const REFERRAL_CONFIG = {
 // Foydalanuvchi referal kod generatsiyasi (tg_id asosida)
 function genReferralCode(user) {
   const base = user?.tgId || user?.username || "USER";
-  return ("NAZ" + String(base).slice(-4).toUpperCase() + Math.floor(1000 + (base%9000||1234))).slice(0,10);
+  return ("IQ" + String(base).slice(-4).toUpperCase() + Math.floor(1000 + (base%9000||1234))).slice(0,10);
 }
 
 // Keyingi milestone
@@ -485,88 +506,101 @@ function incDailyCount(key) {
   } catch {}
 }
 
-// Biletlar: 1-10 bepul, 11-100 Pro
+// ─── IQ JUMBOQLAR BANKI ───
+// cat: numbers | pattern | logic | verbal | spatial (TOPICS_DATA bilan bir xil kalitlar)
+// opts: bitta massiv (tildan mustaqil) yoki {uz,ru,kril}; fig: FigureSVG turi
+const IQ_ITEMS = [
+  { cat:"numbers", correct:0, opts:["32","24","20","18"],
+    q:{uz:"Qatorni davom ettiring: 2, 4, 8, 16, ?",ru:"Продолжите ряд: 2, 4, 8, 16, ?",kril:"Қаторни давом эттиринг: 2, 4, 8, 16, ?"},
+    ex:{uz:"Har bir son oldingisidan 2 barobar katta: 16 × 2 = 32.",ru:"Каждое число вдвое больше предыдущего: 16 × 2 = 32.",kril:"Ҳар бир сон олдингисидан 2 баробар катта: 16 × 2 = 32."} },
+  { cat:"numbers", correct:1, opts:["36","38","35","40"],
+    q:{uz:"Qatorni davom ettiring: 3, 6, 11, 18, 27, ?",ru:"Продолжите ряд: 3, 6, 11, 18, 27, ?",kril:"Қаторни давом эттиринг: 3, 6, 11, 18, 27, ?"},
+    ex:{uz:"Farqlar toq sonlar: +3, +5, +7, +9, keyingisi +11 → 38.",ru:"Разности — нечётные числа: +3, +5, +7, +9, далее +11 → 38.",kril:"Фарқлар тоқ сонлар: +3, +5, +7, +9, кейингиси +11 → 38."} },
+  { cat:"verbal", correct:2, opts:{uz:["Olma","Nok","Sabzi","Olcha"],ru:["Яблоко","Груша","Морковь","Вишня"],kril:["Олма","Нок","Сабзи","Олча"]},
+    q:{uz:"Qaysi so'z ortiqcha?",ru:"Какое слово лишнее?",kril:"Қайси сўз ортиқча?"},
+    ex:{uz:"Sabzi — sabzavot, qolganlari mevalar.",ru:"Морковь — овощ, остальные — фрукты.",kril:"Сабзи — сабзавот, қолганлари мевалар."} },
+  { cat:"verbal", correct:1, opts:{uz:["Oshxona","Ovqatlanish","Likopcha","Pishirish"],ru:["Кухня","Еда","Тарелка","Готовка"],kril:["Ошхона","Овқатланиш","Ликопча","Пишириш"]},
+    q:{uz:"Kitob : o'qish = Qoshiq : ?",ru:"Книга : чтение = Ложка : ?",kril:"Китоб : ўқиш = Қошиқ : ?"},
+    ex:{uz:"Kitob o'qish uchun, qoshiq esa ovqatlanish uchun ishlatiladi.",ru:"Книга нужна для чтения, ложка — для еды.",kril:"Китоб ўқиш учун, қошиқ эса овқатланиш учун ишлатилади."} },
+  { cat:"pattern", correct:0, fig:"dots", opts:["5","4","6","3"],
+    q:{uz:"Rasmdagi qonuniyatni toping: \"?\" o'rnida nechta nuqta bo'lishi kerak?",ru:"Найдите закономерность: сколько точек должно быть вместо «?»",kril:"Расмдаги қонуниятни топинг: «?» ўрнида нечта нуқта бўлиши керак?"},
+    ex:{uz:"Har qatorda nuqtalar soni chapdan o'ngga 1 taga oshadi: 3, 4, 5.",ru:"В каждой строке число точек растёт на 1 слева направо: 3, 4, 5.",kril:"Ҳар қаторда нуқталар сони чапдан ўнгга 1 тага ошади: 3, 4, 5."} },
+  { cat:"numbers", correct:1, opts:["11","13","12","15"],
+    q:{uz:"Qatorni davom ettiring: 1, 1, 2, 3, 5, 8, ?",ru:"Продолжите ряд: 1, 1, 2, 3, 5, 8, ?",kril:"Қаторни давом эттиринг: 1, 1, 2, 3, 5, 8, ?"},
+    ex:{uz:"Har bir son oldingi ikkitasining yig'indisi: 5 + 8 = 13.",ru:"Каждое число — сумма двух предыдущих: 5 + 8 = 13.",kril:"Ҳар бир сон олдинги иккитасининг йиғиндиси: 5 + 8 = 13."} },
+  { cat:"logic", correct:1,
+    opts:{uz:["Barcha mushuklar oq","Ba'zi mushuklar oq bo'lishi mumkin","Hech bir mushuk oq emas","Barcha oq narsalar mushuk"],ru:["Все кошки белые","Некоторые кошки могут быть белыми","Ни одна кошка не белая","Всё белое — кошки"],kril:["Барча мушуклар оқ","Баъзи мушуклар оқ бўлиши мумкин","Ҳеч бир мушук оқ эмас","Барча оқ нарсалар мушук"]},
+    q:{uz:"Barcha mushuklar — hayvon. Ba'zi hayvonlar oq. Qaysi xulosa to'g'ri?",ru:"Все кошки — животные. Некоторые животные белые. Какой вывод верен?",kril:"Барча мушуклар — ҳайвон. Баъзи ҳайвонлар оқ. Қайси хулоса тўғри?"},
+    ex:{uz:"Aniq xulosa chiqarib bo'lmaydi, faqat imkoniyat bor: ba'zi mushuklar oq bo'lishi mumkin.",ru:"Точного вывода нет, есть лишь возможность: некоторые кошки могут быть белыми.",kril:"Аниқ хулоса чиқариб бўлмайди, фақат имконият бор: баъзи мушуклар оқ бўлиши мумкин."} },
+  { cat:"spatial", correct:0, fig:"shapes", opts:{uz:["Oltiburchak","Doira","Uchburchak","Kvadrat"],ru:["Шестиугольник","Круг","Треугольник","Квадрат"],kril:["Олтибурчак","Доира","Учбурчак","Квадрат"]},
+    q:{uz:"Ketma-ketlikda keyingi shakl qaysi?",ru:"Какая фигура следующая в последовательности?",kril:"Кетма-кетликда кейинги шакл қайси?"},
+    ex:{uz:"Har bir shaklda burchaklar soni 1 taga oshadi: 3, 4, 5 → 6.",ru:"У каждой следующей фигуры на 1 угол больше: 3, 4, 5 → 6.",kril:"Ҳар бир шаклда бурчаклар сони 1 тага ошади: 3, 4, 5 → 6."} },
+  { cat:"spatial", correct:0, opts:["90°","60°","120°","45°"],
+    q:{uz:"Soat 3:00 da soat va daqiqa strelkalari orasidagi burchak necha gradus?",ru:"Какой угол между часовой и минутной стрелками в 3:00?",kril:"Соат 3:00 да соат ва дақиқа стрелкалари орасидаги бурчак неча градус?"},
+    ex:{uz:"Siferblat 12 bo'lakka bo'lingan, har biri 30°. 3 bo'lak = 90°.",ru:"Циферблат разделён на 12 частей по 30°. 3 части = 90°.",kril:"Циферблат 12 бўлакка бўлинган, ҳар бири 30°. 3 бўлак = 90°."} },
+  { cat:"logic", correct:2, opts:["100","20","5","1"],
+    q:{uz:"5 ta mashina 5 ta detalni 5 daqiqada yasaydi. 100 ta mashina 100 ta detalni necha daqiqada yasaydi?",ru:"5 станков делают 5 деталей за 5 минут. За сколько минут 100 станков сделают 100 деталей?",kril:"5 та машина 5 та детални 5 дақиқада ясайди. 100 та машина 100 та детални неча дақиқада ясайди?"},
+    ex:{uz:"Bitta mashina bitta detalni 5 daqiqada yasaydi, shuning uchun javob ham 5 daqiqa.",ru:"Один станок делает одну деталь за 5 минут, поэтому ответ — тоже 5 минут.",kril:"Битта машина битта детални 5 дақиқада ясайди, шунинг учун жавоб ҳам 5 дақиқа."} },
+  { cat:"spatial", correct:3, opts:{uz:["Uchburchak","Kvadrat","Doira","Kub"],ru:["Треугольник","Квадрат","Круг","Куб"],kril:["Учбурчак","Квадрат","Доира","Куб"]},
+    q:{uz:"Qaysi biri boshqalariga mos kelmaydi?",ru:"Что не подходит к остальным?",kril:"Қайси бири бошқаларига мос келмайди?"},
+    ex:{uz:"Kub — uch o'lchamli jism, qolganlari tekis shakllar.",ru:"Куб — объёмное тело, остальные — плоские фигуры.",kril:"Куб — уч ўлчамли жисм, қолганлари текис шакллар."} },
+  { cat:"pattern", correct:0, opts:["O","N","M","P"],
+    q:{uz:"Harflar qatorini davom ettiring: A, C, F, J, ?",ru:"Продолжите ряд букв: A, C, F, J, ?",kril:"Ҳарфлар қаторини давом эттиринг: A, C, F, J, ?"},
+    ex:{uz:"Oraliqlar 1 taga oshadi: +2, +3, +4, keyingisi +5 → O.",ru:"Шаг растёт на 1: +2, +3, +4, далее +5 → O.",kril:"Оралиқлар 1 тага ошади: +2, +3, +4, кейингиси +5 → O."} },
+];
+
+// To'plamlar: 1-10 bepul, 11-100 Pro. Har to'plamda 20 ta jumboq.
+// question/options/sign — IQ_ITEMS indeksi (sign: rasm bo'lsa indeks, aks holda null)
 const tickets = Array.from({length:100},(_,i)=>({
   id:i+1,
   isPro: i >= 10,  // 11-dan boshlab Pro
-  questions:Array.from({length:20},(_,j)=>({ 
-    id:j+1, question:j, sign:j%3===0?j%8:null, options:j%10, correct:0,
-    explanation:{
-      uz: "Yo'l harakati qoidalari bo'yicha to'g'ri javob: haydovchi belgilangan tartibda harakat qilishi shart.",
-      ru: "Согласно правилам дорожного движения: водитель обязан соблюдать установленный порядок движения.",
-      kril: "Йўл ҳаракати қоидалари бўйича тўғри жавоб: ҳайдовчи белгиланган тартибда ҳаракат қилиши шарт."
-    }
-  }))
+  questions:Array.from({length:20},(_,j)=>{
+    const k=(i*5+j)%IQ_ITEMS.length, it=IQ_ITEMS[k];
+    return { id:j+1, question:k, sign:it.fig?k:null, options:k, correct:it.correct, explanation:it.ex };
+  })
 }));
 
-const QUESTIONS = [
-  "Quyidagi rasmda qaysi yo'l belgisi ko'rsatilgan? / Какой знак изображён на рисунке? / Қуйидаги расмда қайси йўл белгиси кўрсатилган?",
-  "Yo'l harakatida chapga burilish qachon taqiqlanadi? / Когда запрещён поворот налево? / Йўл ҳаракатида чапга бурилиш қачон тақиқланади?",
-  "Tuman sharoitida to'xtash masofasi qanday o'zgaradi? / Как меняется тормозной путь в туман? / Туман шароитида тўхташ масофаси қандай ўзгаради?",
-  "Piyodalar o'tish joyida haydovchi nima qilishi kerak? / Что должен делать водитель на пешеходном переходе? / Пиёдалар ўтиш жойида ҳайдовчи нима қилиши керак?",
-  "Yashil chiroqda haydovchi nima qilishi kerak? / Что делать водителю на зелёный сигнал? / Яшил чироқда ҳайдовчи нима қилиши керак?",
-  "Yo'lda ustunlik huquqi kimda bo'ladi? / Кто имеет преимущество на дороге? / Йўлда устунлик ҳуқуқи кимда бўлади?",
-  "Qanday holatda signal chalinishi mumkin? / В каком случае разрешено подавать сигнал? / Қандай ҳолатда сигнал чалиниши мумкин?",
-  "Avtomobil tormoz yo'li nimaga bog'liq? / От чего зависит тормозной путь? / Автомобил тормоз йўли нимага боғлиқ?",
-  "Shahar ichida maksimal tezlik qancha? / Какова максимальная скорость в городе? / Шаҳар ичида максимал тезлик қанча?",
-  "Bolalar tashiydigan avtobusni qanday chetlab o'tish kerak? / Как обогнать автобус с детьми? / Болалар ташийдиган автобусни қандай четлаб ўтиш керак?",
-];
-const OPTIONS = [
-  ["Bolalar","Piyodalar o'tish joyi","Ehtiyot bo'ling","Maktab yaqinida"],
-  ["Chapga burilish belgisi bo'lmasa","Har doim","Trafik tirband bo'lsa","Yo'l tor bo'lsa"],
-  ["2 barobar uzayadi","Qisqaradi","O'zgarmaydi","Tezlik taqiqlanadi"],
-  ["To'xtash kerak","Tezlashish kerak","Signal berish","Harakatni davom ettirish"],
-  ["Harakatni davom ettirish","To'xtatish","Chiroqni kutish","Signal berish"],
-  ["Asosiy yo'ldagi haydovchida","Ikkilamchi yo'lda","Ikkoviga teng","Tezroq harakatlanuvchida"],
-  ["Xavfli vaziyatda","Har doim","Tungi paytda","Shaharda hech qachon"],
-  ["Tezlikka","Yo'l yuzasiga","Ob-havoga","Barcha omillarga"],
-  ["60 km/s","80 km/s","50 km/s","70 km/s"],
-  ["Chap tarafdan","O'ng tarafdan","Har ikki tarafdan","To'xtab kutish"],
-];
-const SIGNS = ["warn","no-left","stop","ped","children","no-entry","speed","rail"];
-
-function SignSVG({type}) {
-  const shapes = { stop:"oct", "no-entry":"oct", warn:"tri", children:"tri" };
-  const s = shapes[type]||"circ";
-  const bg = { warn:"#FFD600","no-left":"#EF4444",stop:"#EF4444",ped:"#F59E0B",children:"#F59E0B","no-entry":"#EF4444",speed:"white",rail:"#1A6BFF" }[type]||"#EEE";
-  return (
-    <svg width="90" height="90" viewBox="0 0 90 90">
-      {s==="tri"&&<polygon points="45,8 82,75 8,75" fill={bg} stroke="#333" strokeWidth="3"/>}
-      {s==="circ"&&<circle cx="45" cy="45" r="38" fill={bg} stroke="#333" strokeWidth="3"/>}
-      {s==="oct"&&<polygon points="28,10 62,10 80,28 80,62 62,80 28,80 10,62 10,28" fill={bg} stroke="#333" strokeWidth="3"/>}
-      {type==="warn"&&<text x="45" y="66" textAnchor="middle" fontSize="34" fill="#333" fontWeight="900">!</text>}
-      {type==="ped"&&<><circle cx="45" cy="22" r="7" fill="#333"/><path d="M45 29v14M38 35l7-4 7 4M40 43l5-4M50 43l-5-4" stroke="#333" strokeWidth="2.5" strokeLinecap="round"/></>}
-      {type==="children"&&<><circle cx="45" cy="30" r="9" fill="#333"/><path d="M36 48c0-5 4-9 9-9s9 4 9 9" stroke="#333" strokeWidth="2.5" strokeLinecap="round" fill="none"/></>}
-      {type==="no-left"&&<><line x1="30" y1="45" x2="60" y2="45" stroke="white" strokeWidth="6"/><polyline points="43,34 30,45 43,56" stroke="white" strokeWidth="5" fill="none" strokeLinecap="round"/><line x1="15" y1="15" x2="75" y2="75" stroke="white" strokeWidth="5"/></>}
-      {type==="stop"&&<text x="45" y="57" textAnchor="middle" fontSize="18" fontWeight="900" fill="white">STOP</text>}
-      {type==="no-entry"&&<rect x="22" y="41" width="46" height="8" rx="3" fill="white"/>}
-      {type==="speed"&&<><circle cx="45" cy="45" r="28" fill="#EF4444" stroke="white" strokeWidth="4"/><text x="45" y="54" textAnchor="middle" fontSize="22" fontWeight="900" fill="white">60</text></>}
-      {type==="rail"&&<><rect x="22" y="28" width="46" height="30" rx="6" fill="white" opacity="0.9"/><circle cx="34" cy="62" r="5" fill="white"/><circle cx="56" cy="62" r="5" fill="white"/><line x1="29" y1="38" x2="29" y2="52" stroke="#1A6BFF" strokeWidth="2.5"/><line x1="61" y1="38" x2="61" y2="52" stroke="#1A6BFF" strokeWidth="2.5"/><line x1="22" y1="45" x2="68" y2="45" stroke="#1A6BFF" strokeWidth="1.5"/></>}
-    </svg>
-  );
+// Jumboq rasmi (matritsa yoki shakllar ketma-ketligi)
+function SignSVG({item}) {
+  const it=IQ_ITEMS[item]; if(!it?.fig) return null;
+  const ink="#1D1B2E", acc="#4F3FD0";
+  if(it.fig==="dots"){
+    const cells=[[1,2,3],[2,3,4],[3,4,null]];
+    return <svg width="180" height="180" viewBox="0 0 180 180">
+      {cells.map((row,r)=>row.map((n,c)=>{
+        const x=c*60+4,y=r*60+4;
+        return <g key={`${r}-${c}`}>
+          <rect x={x} y={y} width="52" height="52" rx="10" fill={n===null?"#F1EFFD":"white"} stroke={n===null?acc:"#DEDBEA"} strokeWidth="2" strokeDasharray={n===null?"5,4":"0"}/>
+          {n===null
+            ? <text x={x+26} y={y+35} textAnchor="middle" fontSize="24" fontWeight="800" fill={acc}>?</text>
+            : Array.from({length:n},(_,d)=><circle key={d} cx={x+10+(d%3)*16} cy={y+14+Math.floor(d/3)*16} r="5" fill={ink}/>)}
+        </g>;
+      }))}
+    </svg>;
+  }
+  // shapes: uchburchak, kvadrat, beshburchak, ?
+  const poly=(n,cx,cy,r)=>Array.from({length:n},(_,i)=>{const a=-Math.PI/2+i*2*Math.PI/n;return `${cx+r*Math.cos(a)},${cy+r*Math.sin(a)}`;}).join(" ");
+  return <svg width="240" height="70" viewBox="0 0 240 70">
+    {[3,4,5].map((n,i)=><polygon key={n} points={poly(n,30+i*60,36,24)} fill="white" stroke={ink} strokeWidth="2.5" strokeLinejoin="round"/>)}
+    <rect x="186" y="10" width="48" height="52" rx="10" fill="#F1EFFD" stroke={acc} strokeWidth="2" strokeDasharray="5,4"/>
+    <text x="210" y="45" textAnchor="middle" fontSize="24" fontWeight="800" fill={acc}>?</text>
+  </svg>;
 }
 
 function getQ(q,lang) {
-  const parts = QUESTIONS[q%10].split(" / ");
-  return parts[lang==="ru"?1:lang==="kril"?2:0];
+  const it=IQ_ITEMS[(q??0)%IQ_ITEMS.length];
+  return it.q[lang]||it.q.uz;
 }
 function getOpts(q,lang) {
-  if(lang==="ru"){
-    const ru=[["Дети","Пешеходный переход","Осторожно","Рядом школа"],["Если нет знака","Всегда","В пробке","Узкая дорога"],["Увеличивается вдвое","Уменьшается","Не изменяется","Скорость запрещена"],["Остановиться","Ускориться","Сигналить","Продолжать движение"],["Продолжать движение","Остановиться","Ждать","Сигналить"],["У водителя главной дороги","На второстепенной","Поровну","У быстрого"],["В опасной ситуации","Всегда","Ночью","Никогда в городе"],["От скорости","От покрытия","От погоды","От всего"],["60 км/ч","80 км/ч","50 км/ч","70 км/ч"],["Слева","Справа","С обеих сторон","Ждать"]];
-    return ru[q%10];
-  }
-  if(lang==="kril"){
-    const kr=[["Болалар","Пиёдалар ўтиш жойи","Эҳтиёт бўлинг","Мактаб яқинида"],["Чапга бурилиш белгиси бўлмаса","Ҳар доим","Трафик тирбанд бўлса","Йўл тор бўлса"],["2 баробар узаяди","Қисқаради","Ўзгармайди","Тезлик тақиқланади"],["Тўхташ керак","Тезлашиш керак","Сигнал бериш","Ҳаракатни давом эттириш"],["Ҳаракатни давом эттириш","Тўхтатиш","Чироқни кутиш","Сигнал бериш"],["Асосий йўлдаги ҳайдовчида","Иккиламчи йўлда","Иккисига тенг","Тезроқ ҳаракатланувчида"],["Хавфли вазиятда","Ҳар доим","Тунги пайтда","Шаҳарда ҳеч қачон"],["Тезликка","Йўл юзасига","Об-ҳавога","Барча омилларга"],["60 км/с","80 км/с","50 км/с","70 км/с"],["Чап тарафдан","Ўнг тарафдан","Ҳар икки тарафдан","Тўхтаб кутиш"]];
-    return kr[q%10];
-  }
-  return OPTIONS[q%10];
+  const it=IQ_ITEMS[(q??0)%IQ_ITEMS.length];
+  return Array.isArray(it.opts)?it.opts:(it.opts[lang]||it.opts.uz);
 }
 
 const leaderboard=[{rank:1,name:"Jasur",xp:1850,av:"J"},{rank:2,name:"Alisher",xp:2460,av:"A",me:true},{rank:3,name:"Sardor",xp:1750,av:"S"},{rank:4,name:"Behzod",xp:1640,av:"B"},{rank:5,name:"Sanjar",xp:1500,av:"SA"},{rank:6,name:"Bobur",xp:1400,av:"BO"}];
 
 // ─── UI COMPONENTS ───
 function BottomNav({screen,setScreen,T,C}) {
-  const tabs=[{id:"home",lk:"home",Icon:IC.Home},{id:"tickets",lk:"tickets",Icon:IC.Ticket},{id:"tests",lk:"tests",Icon:IC.Clipboard},{id:"exam",lk:"exam",Icon:IC.Clock},{id:"profile",lk:"profile",Icon:IC.User}];
+  const tabs=[{id:"home",lk:"home",Icon:IC.Home},{id:"tickets",lk:"tickets",Icon:IC.Grid},{id:"tests",lk:"tests",Icon:IC.Clipboard},{id:"exam",lk:"exam",Icon:IC.Brain},{id:"profile",lk:"profile",Icon:IC.User}];
   // Telegram va iPhone uchun pastki safe area
   const safeBottom = typeof window !== "undefined"
     ? (window?.Telegram?.WebApp?.safeAreaInset?.bottom || 0)
@@ -639,41 +673,29 @@ function DarkToggle({dark,setDark,C,T}) {
 const OB_SLIDES = [
   {
     titleKey:"ob1Title", subKey:"ob1Sub",
-    accent:"#1A6BFF",
-    gradA:"#1A6BFF", gradB:"#6366F1",
+    accent:"#4F3FD0",
+    gradA:"#4F3FD0", gradB:"#6366F1",
     illustration:(
       <svg viewBox="0 0 280 220" width="280" height="220">
-        {/* Road */}
-        <rect x="0" y="140" width="280" height="80" rx="0" fill="rgba(255,255,255,0.08)"/>
-        <rect x="120" y="148" width="40" height="8" rx="4" fill="rgba(255,255,255,0.3)"/>
-        <rect x="120" y="168" width="40" height="8" rx="4" fill="rgba(255,255,255,0.3)"/>
-        {/* Car body */}
-        <rect x="80" y="100" width="120" height="50" rx="14" fill="white"/>
-        <rect x="96" y="78" width="84" height="36" rx="12" fill="white" opacity="0.9"/>
-        {/* Windows */}
-        <rect x="102" y="84" width="32" height="24" rx="6" fill="#6366F1" opacity="0.4"/>
-        <rect x="142" y="84" width="32" height="24" rx="6" fill="#6366F1" opacity="0.4"/>
-        {/* Wheels */}
-        <circle cx="110" cy="152" r="14" fill="#1E293B"/>
-        <circle cx="110" cy="152" r="7" fill="white" opacity="0.5"/>
-        <circle cx="170" cy="152" r="14" fill="#1E293B"/>
-        <circle cx="170" cy="152" r="7" fill="white" opacity="0.5"/>
-        {/* Headlights */}
-        <rect x="190" y="112" width="14" height="8" rx="4" fill="#FEF3C7"/>
-        <rect x="190" y="126" width="14" height="8" rx="4" fill="#FEF3C7" opacity="0.6"/>
-        {/* N logo on car */}
-        <rect x="124" y="108" width="32" height="26" rx="6" fill="#1A6BFF"/>
-        <text x="140" y="126" textAnchor="middle" fontSize="16" fontWeight="900" fill="white" fontFamily="serif">N</text>
-        {/* Scenery */}
-        <circle cx="30" cy="110" r="22" fill="rgba(255,255,255,0.08)"/>
-        <circle cx="250" cy="100" r="18" fill="rgba(255,255,255,0.06)"/>
+        {/* 3x3 jumboq matritsasi */}
+        {[0,1,2].map(r=>[0,1,2].map(c=>{
+          const x=77+c*44,y=38+r*44,last=r===2&&c===2;
+          return <g key={`${r}${c}`}>
+            <rect x={x} y={y} width="38" height="38" rx="10" fill={last?"rgba(255,255,255,0.15)":"white"} stroke={last?"white":"none"} strokeWidth="2" strokeDasharray={last?"5,4":"0"} opacity={last?1:0.95}/>
+            {last
+              ? <text x={x+19} y={y+26} textAnchor="middle" fontSize="20" fontWeight="900" fill="white">?</text>
+              : [<circle key="a" cx={x+19} cy={y+19} r={5+((r+c)%3)*3} fill="#4F3FD0" opacity={0.35+0.2*r}/>]}
+          </g>;
+        }))}
+        {/* Q logo badge */}
+        <circle cx="222" cy="176" r="24" fill="white"/>
+        <text x="222" y="185" textAnchor="middle" fontSize="24" fontWeight="900" fill="#4F3FD0" fontFamily="serif">Q</text>
+        {/* Sparkles */}
         <circle cx="40" cy="55" r="5" fill="rgba(255,255,255,0.5)"/>
         <circle cx="240" cy="40" r="3" fill="rgba(255,255,255,0.4)"/>
         <circle cx="260" cy="75" r="4" fill="rgba(255,255,255,0.3)"/>
-        <circle cx="18" cy="80" r="3" fill="rgba(255,255,255,0.35)"/>
-        {/* Speed lines */}
-        <line x1="20" y1="120" x2="60" y2="120" stroke="rgba(255,255,255,0.2)" strokeWidth="3" strokeLinecap="round"/>
-        <line x1="15" y1="130" x2="50" y2="130" stroke="rgba(255,255,255,0.15)" strokeWidth="2" strokeLinecap="round"/>
+        <circle cx="30" cy="150" r="3" fill="rgba(255,255,255,0.35)"/>
+        <circle cx="50" cy="185" r="16" fill="rgba(255,255,255,0.08)"/>
       </svg>
     )
   },
@@ -738,9 +760,9 @@ const OB_SLIDES = [
         <circle cx="140" cy="105" r="5" fill="white"/>
         {/* Error indicator */}
         <rect x="30" y="175" width="50" height="22" rx="11" fill="rgba(255,255,255,0.2)"/>
-        <text x="55" y="190" textAnchor="middle" fontSize="11" fontWeight="700" fill="white">0 / 2</text>
-        <rect x="200" y="175" width="50" height="22" rx="11" fill="#EF4444" opacity="0.8"/>
-        <text x="225" y="190" textAnchor="middle" fontSize="11" fontWeight="700" fill="white">2 / 2</text>
+        <text x="55" y="190" textAnchor="middle" fontSize="11" fontWeight="700" fill="white">20 ?</text>
+        <rect x="200" y="175" width="50" height="22" rx="11" fill="rgba(255,255,255,0.3)"/>
+        <text x="225" y="190" textAnchor="middle" fontSize="11" fontWeight="700" fill="white">15:00</text>
         <circle cx="258" cy="48" r="4" fill="rgba(255,255,255,0.4)"/>
         <circle cx="24" cy="70" r="3" fill="rgba(255,255,255,0.3)"/>
       </svg>
@@ -815,12 +837,12 @@ function OnboardingScreen({onFinish, lang, setLang}) {
         {/* Top decorations */}
         <div style={{position:"relative",height:220,overflow:"hidden",flexShrink:0}}>
           {/* Circles decoration */}
-          <div style={{position:"absolute",top:-60,left:-60,width:220,height:220,borderRadius:"50%",background:"rgba(26,107,255,0.12)"}}/>
-          <div style={{position:"absolute",top:-30,left:-30,width:140,height:140,borderRadius:"50%",background:"rgba(26,107,255,0.1)"}}/>
+          <div style={{position:"absolute",top:-60,left:-60,width:220,height:220,borderRadius:"50%",background:"rgba(79,63,208,0.12)"}}/>
+          <div style={{position:"absolute",top:-30,left:-30,width:140,height:140,borderRadius:"50%",background:"rgba(79,63,208,0.1)"}}/>
           <div style={{position:"absolute",top:40,right:-40,width:180,height:180,borderRadius:"50%",background:"rgba(99,102,241,0.1)"}}/>
           {/* N Logo */}
-          <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:80,height:80,borderRadius:24,background:"linear-gradient(135deg,#1A6BFF,#6366F1)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 8px 40px rgba(26,107,255,0.5)"}}>
-            <span style={{color:"white",fontSize:44,fontWeight:900,fontFamily:"serif",lineHeight:1}}>N</span>
+          <div style={{position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:80,height:80,borderRadius:24,background:"linear-gradient(135deg,#4F3FD0,#6366F1)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 8px 40px rgba(79,63,208,0.5)"}}>
+            <span style={{color:"white",fontSize:44,fontWeight:900,fontFamily:"serif",lineHeight:1}}>Q</span>
           </div>
         </div>
 
@@ -842,12 +864,12 @@ function OnboardingScreen({onFinish, lang, setLang}) {
                   style={{
                     display:"flex",alignItems:"center",gap:16,
                     padding:"16px 20px",borderRadius:18,cursor:"pointer",
-                    background:active?"rgba(26,107,255,0.15)":"rgba(255,255,255,0.05)",
-                    border:`2px solid ${active?"#1A6BFF":"rgba(255,255,255,0.08)"}`,
+                    background:active?"rgba(79,63,208,0.15)":"rgba(255,255,255,0.05)",
+                    border:`2px solid ${active?"#4F3FD0":"rgba(255,255,255,0.08)"}`,
                     transition:"all 0.2s"
                   }}>
                   {/* Left color bar */}
-                  <div style={{width:4,height:36,borderRadius:2,background:active?"#1A6BFF":"rgba(255,255,255,0.15)",transition:"background 0.2s"}}/>
+                  <div style={{width:4,height:36,borderRadius:2,background:active?"#4F3FD0":"rgba(255,255,255,0.15)",transition:"background 0.2s"}}/>
                   <div style={{flex:1}}>
                     <div style={{fontWeight:700,fontSize:15,color:active?"white":"rgba(255,255,255,0.7)"}}>
                       {l.label}
@@ -857,7 +879,7 @@ function OnboardingScreen({onFinish, lang, setLang}) {
                     </div>
                   </div>
                   {/* Radio */}
-                  <div style={{width:22,height:22,borderRadius:"50%",border:`2px solid ${active?"#1A6BFF":"rgba(255,255,255,0.2)"}`,background:active?"#1A6BFF":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all 0.2s"}}>
+                  <div style={{width:22,height:22,borderRadius:"50%",border:`2px solid ${active?"#4F3FD0":"rgba(255,255,255,0.2)"}`,background:active?"#4F3FD0":"transparent",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,transition:"all 0.2s"}}>
                     {active&&<svg width="10" height="10" viewBox="0 0 24 24" fill="none"><polyline points="20 6 9 17 4 12" stroke="white" strokeWidth="3.5" strokeLinecap="round" strokeLinejoin="round"/></svg>}
                   </div>
                 </div>
@@ -867,7 +889,7 @@ function OnboardingScreen({onFinish, lang, setLang}) {
 
           {/* Confirm button */}
           <button onClick={confirmLang}
-            style={{width:"100%",padding:"16px",borderRadius:18,border:"none",background:"linear-gradient(135deg,#1A6BFF,#6366F1)",color:"white",fontSize:16,fontWeight:800,cursor:"pointer",boxShadow:"0 4px 24px rgba(26,107,255,0.4)",letterSpacing:"0.3px"}}>
+            style={{width:"100%",padding:"16px",borderRadius:18,border:"none",background:"linear-gradient(135deg,#4F3FD0,#6366F1)",color:"white",fontSize:16,fontWeight:800,cursor:"pointer",boxShadow:"0 4px 24px rgba(79,63,208,0.4)",letterSpacing:"0.3px"}}>
             {T.continue} →
           </button>
         </div>
@@ -935,6 +957,8 @@ function TopicIcon({icon, size=20, color="#94A3B8"}) {
     mandatory: IC.Mandatory, prohibit: IC.Prohibit, warning: IC.Warning,
     warning2: IC.Warning, info: IC.Info, hospital: IC.Hospital,
     ticket: IC.Ticket2, stats: IC.Stats, graduation: IC.GraduationCap2,
+    brain: IC.Brain, numbers: IC.Hash, pattern: IC.Grid, verbal: IC.Words, logic: IC.Logic,
+    spatial: IC.Cube, memory: IC.Brain, attention: IC.Target, speedcalc: IC.Zap, tip: IC.Lightbulb,
   };
   const Comp = map[icon] || IC.Info;
   return <Comp size={size} color={color}/>;
@@ -944,19 +968,19 @@ function TopicIcon({icon, size=20, color="#94A3B8"}) {
 function ProGate({T, C, setScreen, reason, onBack}) {
   const reasons = {
     ticket: {
-      title: "Bu bilet Pro uchun",
-      sub: "Ushbu bilet faqat Pro obuna foydalanuvchilari uchun ochiq.",
-      icon: "ticket",
+      title: "Bu to'plam Pro uchun",
+      sub: "Ushbu to'plam faqat Pro obuna foydalanuvchilari uchun ochiq.",
+      icon: "pattern",
     },
     testLimit: {
       title: "Kunlik limit tugadi",
-      sub: `Bugun ${LIMITS.dailyTestLimit} ta bepul test savoliga javob berdingiz. Davom etish uchun Pro obuna oling.`,
+      sub: `Bugun ${LIMITS.dailyTestLimit} ta bepul jumboqqa javob berdingiz. Davom etish uchun Pro obuna oling.`,
       icon: "stats",
     },
     examLimit: {
-      title: "Bepul imtihon tugadi",
-      sub: `Kuniga ${LIMITS.freeExamCount} ta bepul imtihon. Bugungi imtihon huquqingiz tugadi.`,
-      icon: "graduation",
+      title: "Bepul IQ test tugadi",
+      sub: `Kuniga ${LIMITS.freeExamCount} ta bepul IQ test. Bugungi urinishlaringiz tugadi.`,
+      icon: "brain",
     },
   };
   const r = reasons[reason] || reasons.ticket;
@@ -984,7 +1008,7 @@ function LoginScreen({setScreen,setUser,T,C,dark,setDark,lang,setLang}) {
   const [pass,setPass]=useState("12345678");
   const [showLang,setShowLang]=useState(false);
   return (
-    <div style={{minHeight:"100vh",background:dark?"#0F172A":`linear-gradient(160deg,#e8f0ff,#f5f8ff)`,padding:24,display:"flex",flexDirection:"column"}}>
+    <div style={{minHeight:"100vh",background:dark?"#0F172A":`linear-gradient(160deg,#ECEAFB,#F5F4FB)`,padding:24,display:"flex",flexDirection:"column"}}>
       <LangModal visible={showLang} onClose={()=>setShowLang(false)} lang={lang} setLang={setLang} C={C}/>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:24}}>
         <button onClick={()=>setShowLang(true)} style={{display:"flex",alignItems:"center",gap:6,padding:"7px 12px",borderRadius:20,border:`1.5px solid ${C.gray200}`,background:C.card,cursor:"pointer"}}>
@@ -993,11 +1017,11 @@ function LoginScreen({setScreen,setUser,T,C,dark,setDark,lang,setLang}) {
         <DarkToggle dark={dark} setDark={setDark} C={C} T={T}/>
       </div>
       <div style={{flex:1,display:"flex",flexDirection:"column",justifyContent:"center",alignItems:"center"}}>
-        <div style={{width:90,height:90,borderRadius:24,background:"linear-gradient(135deg,#1A6BFF,#5B9FFF)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 8px 32px rgba(26,107,255,0.3)",marginBottom:12}}>
-          <span style={{color:"white",fontSize:48,fontWeight:900,fontFamily:"serif"}}>N</span>
+        <div style={{width:90,height:90,borderRadius:24,background:"linear-gradient(135deg,#4F3FD0,#9C90FF)",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 8px 32px rgba(79,63,208,0.3)",marginBottom:12}}>
+          <span style={{color:"white",fontSize:48,fontWeight:900,fontFamily:"serif"}}>Q</span>
         </div>
-        <h2 style={{fontSize:26,fontWeight:800,color:C.text,margin:"0 0 4px"}}>Nazariy</h2>
-        <p style={{color:C.subtext,margin:"0 0 36px",fontSize:14}}>Avtotest Ilovasi</p>
+        <h2 style={{fontSize:26,fontWeight:800,color:C.text,margin:"0 0 4px"}}>IQuest</h2>
+        <p style={{color:C.subtext,margin:"0 0 36px",fontSize:14}}>Aql sarguzashti</p>
         <Card C={C} style={{width:"100%",padding:24}}>
           <div style={{marginBottom:16}}>
             <label style={{fontSize:13,color:C.subtext,fontWeight:500,display:"block",marginBottom:6}}>{T.phone}</label>
@@ -1067,18 +1091,18 @@ function HomeScreen({setScreen,user,T,C,unreadCount,savedQuestions,dark,setDark,
   const [searchQuery,setSearchQuery]=useState("");
 
   const menuItems=[
-    {lk:"tickets", Icon:IC.Ticket,       sc:"tickets", accent:"#1A6BFF", light:"#EBF2FF"},
-    {lk:"topics",  Icon:IC.Map,          sc:"topics",  accent:"#22C55E", light:"#DCFCE7"},
-    {lk:"exam",    Icon:IC.GraduationCap,sc:"exam",    accent:"#F59E0B", light:"#FEF3C7"},
+    {lk:"tickets", Icon:IC.Grid,         sc:"tickets", accent:"#4F3FD0", light:"#ECEAFB"},
+    {lk:"topics",  Icon:IC.Grid,          sc:"topics",  accent:"#22C55E", light:"#DCFCE7"},
+    {lk:"exam",    Icon:IC.Brain,        sc:"exam",    accent:"#F59E0B", light:"#FEF3C7"},
     {lk:"stats",   Icon:IC.BarChart,     sc:"stats",   accent:"#8B5CF6", light:"#F5F3FF"},
     {lk:"rating",  Icon:IC.Medal,        sc:"rating",  accent:"#F59E0B", light:"#FEF3C7"},
-    {lk:"rules",   Icon:IC.Shield,       sc:"rules",   accent:"#EC4899", light:"#FCE7F3"},
+    {lk:"rules",   Icon:IC.Lightbulb,       sc:"rules",   accent:"#EC4899", light:"#FCE7F3"},
   ];
 
   const activities=[
-    {Icon:IC.Ticket,    label:"Bilet 12", score:"18/20", p:90,  color:"#1A6BFF"},
-    {Icon:IC.Clipboard, label:"Test",     score:"19/25", p:76,  color:"#8B5CF6"},
-    {Icon:IC.Clock,     label:"Imtihon",  score:"18/20", p:90,  color:"#22C55E"},
+    {Icon:IC.Ticket,    label:`${T.ticket} 12`, score:"18/20", p:90,  color:"#4F3FD0"},
+    {Icon:IC.Clipboard, label:T.tests,     score:"19/25", p:76,  color:"#8B5CF6"},
+    {Icon:IC.Brain,     label:T.exam,     score:"IQ 108–120", p:90,  color:"#22C55E"},
   ];
 
   return (
@@ -1173,7 +1197,7 @@ function HomeScreen({setScreen,user,T,C,unreadCount,savedQuestions,dark,setDark,
         {/* STATS STRIP */}
         <div style={{display:"flex",gap:10,marginTop:14}}>
           {[
-            {label:T.active,  val:"92%", color:"#1A6BFF", bg:dark?"#1A3A6B22":"#EBF2FF"},
+            {label:T.active,  val:"92%", color:"#4F3FD0", bg:dark?"#26224A22":"#ECEAFB"},
             {label:T.tests,   val:"85%", color:"#22C55E", bg:dark?"#16653622":"#DCFCE7"},
             {label:T.rating,  val:"#24", color:"#F59E0B", bg:dark?"#78350f22":"#FEF3C7"},
           ].map(s=>(
@@ -1185,7 +1209,7 @@ function HomeScreen({setScreen,user,T,C,unreadCount,savedQuestions,dark,setDark,
         </div>
       </div>
       <div style={{padding:"18px 20px 0"}}>
-        <div style={{background:dark?"linear-gradient(135deg,#1e3a5f,#1e2d5a)":"linear-gradient(135deg,#1A6BFF,#3B82F6)",borderRadius:22,padding:"18px 20px",position:"relative",overflow:"hidden"}}>
+        <div style={{background:dark?"linear-gradient(135deg,#26224A,#231F45)":"linear-gradient(135deg,#4F3FD0,#6B5CF0)",borderRadius:22,padding:"18px 20px",position:"relative",overflow:"hidden"}}>
           {/* decorative circle */}
           <div style={{position:"absolute",right:-20,top:-20,width:100,height:100,borderRadius:"50%",background:"rgba(255,255,255,0.07)"}}/>
           <div style={{position:"absolute",right:30,bottom:-30,width:80,height:80,borderRadius:"50%",background:"rgba(255,255,255,0.05)"}}/>
@@ -1207,7 +1231,7 @@ function HomeScreen({setScreen,user,T,C,unreadCount,savedQuestions,dark,setDark,
       {/* ── QUICK MENU ── */}
       <div style={{padding:"20px 20px 0"}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14}}>
-          <span style={{fontWeight:700,fontSize:15,color:C.text}}>Xizmatlar</span>
+          <span style={{fontWeight:700,fontSize:15,color:C.text}}>{T.services}</span>
         </div>
         <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:10}}>
           {menuItems.map(item=>{
@@ -1289,7 +1313,7 @@ function TicketsScreen({setScreen,setActiveTicket,T,C,user}) {
         {/* Bepul/Pro info */}
         {!isPro && <div style={{background:C.card,borderRadius:12,padding:"10px 14px",marginBottom:12,display:"flex",alignItems:"center",gap:10,border:`1px solid ${C.cardBorder}`}}>
           <IC.Info size={16} color={C.primary}/>
-          <span style={{fontSize:12,color:C.subtext,flex:1}}>Biletlar 1-{LIMITS.freeTicketCount} bepul. {LIMITS.freeTicketCount+1}-100 Pro uchun <IC.Diamond size={12} color="#8B5CF6"/></span>
+          <span style={{fontSize:12,color:C.subtext,flex:1}}>{T.ticket} 1-{LIMITS.freeTicketCount} bepul. {LIMITS.freeTicketCount+1}-100 Pro uchun <IC.Diamond size={12} color="#8B5CF6"/></span>
         </div>}
         {filtered.map(ticket=>{
           const isLocked = ticket.isPro && !isPro;
@@ -1297,7 +1321,7 @@ function TicketsScreen({setScreen,setActiveTicket,T,C,user}) {
             <div key={ticket.id} onClick={()=>handleTicketClick(ticket)}
               style={{background:C.card,borderRadius:14,padding:"14px 16px",marginBottom:10,display:"flex",alignItems:"center",boxShadow:"0 2px 8px rgba(0,0,0,0.08)",cursor:"pointer",border:`1px solid ${isLocked?"#E2E8F0":C.cardBorder}`,opacity:isLocked?0.8:1}}>
               <div style={{width:40,height:40,borderRadius:12,background:isLocked?"#F1F5F9":ticket.progress!==null?C.primary+"22":C.gray100,display:"flex",alignItems:"center",justifyContent:"center",marginRight:12,fontWeight:700,color:isLocked?C.muted:ticket.progress!==null?C.primary:C.gray600,fontSize:13}}>
-                {isLocked ? <IC.Lock size={18} color={C.muted}/> : `B${ticket.id}`}
+                {isLocked ? <IC.Lock size={18} color={C.muted}/> : `#${ticket.id}`}
               </div>
               <div style={{flex:1}}>
                 <div style={{fontWeight:600,fontSize:14,color:isLocked?C.subtext:C.text,display:"flex",alignItems:"center",gap:6}}>
@@ -1320,13 +1344,16 @@ function TicketsScreen({setScreen,setActiveTicket,T,C,user}) {
   );
 }
 
-function OptionsList({options,correct,selected,onSelect,C}) {
+// neutral=true — o'lchash rejimi (IQ test): tanlangan variant faqat aksent bilan belgilanadi,
+// to'g'ri/noto'g'ri ko'rsatilmaydi (DESIGN.md §2)
+function OptionsList({options,correct,selected,onSelect,C,neutral=false}) {
   return <>{options.map((opt,i)=>{
-    const letter=String.fromCharCode(65+i),isSel=selected===i,isCorr=i===correct;
+    const letter=String.fromCharCode(65+i),isSel=selected===i,isCorr=!neutral&&i===correct;
     let bg=C.gray100,border="transparent",color=C.text;
-    if(selected!==null){if(isCorr){bg="#DCFCE7";border=C.success;color=C.success;}else if(isSel){bg="#FEE2E2";border=C.danger;color=C.danger;}}
+    if(neutral){if(isSel){bg=C.primary+"18";border=C.primary;color=C.primary;}}
+    else if(selected!==null){if(isCorr){bg=C.success+"18";border=C.success;color=C.success;}else if(isSel){bg=C.danger+"18";border=C.danger;color=C.danger;}}
     return <div key={i} onClick={()=>selected===null&&onSelect(i)} style={{background:bg,borderRadius:14,padding:"14px 16px",marginBottom:10,border:`2px solid ${border}`,cursor:selected!==null?"default":"pointer",display:"flex",alignItems:"center",gap:12}}>
-      <div style={{width:28,height:28,borderRadius:"50%",flexShrink:0,background:selected!==null&&isCorr?C.success:selected!==null&&isSel?C.danger:C.card,border:`2px solid ${C.gray300}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:selected!==null&&(isCorr||isSel)?"white":C.gray600}}>{letter}</div>
+      <div style={{width:28,height:28,borderRadius:"50%",flexShrink:0,background:neutral?(isSel?C.primary:C.card):selected!==null&&isCorr?C.success:selected!==null&&isSel?C.danger:C.card,border:`2px solid ${C.gray300}`,display:"flex",alignItems:"center",justifyContent:"center",fontSize:12,fontWeight:700,color:selected!==null&&(isCorr||isSel)?"white":C.gray600}}>{letter}</div>
       <span style={{fontWeight:500,fontSize:14,color}}>{opt}</span>
     </div>;
   })}</>;
@@ -1393,7 +1420,7 @@ function TicketQuizScreen({setScreen,ticket,setLastResult,T,C,lang,savedQuestion
     </div>
     <div style={{padding:20}}>
       <div style={{fontWeight:700,fontSize:16,color:C.text,marginBottom:20,lineHeight:1.5}}>{getQ(q.question,lang)}</div>
-      {q.sign!==null&&<div style={{textAlign:"center",marginBottom:20,background:"linear-gradient(135deg,#FEF3C7,#FDE68A)",borderRadius:20,padding:20}}><SignSVG type={SIGNS[q.sign%8]}/></div>}
+      {q.sign!==null&&<div style={{textAlign:"center",marginBottom:20,background:"#F1EFFD",borderRadius:20,padding:20}}><SignSVG item={q.sign}/></div>}
       <OptionsList options={getOpts(q.options,lang)} correct={q.correct} selected={selected} onSelect={handleAnswer} C={C}/>
       {answered&&(
         <div style={{marginTop:16,borderRadius:14,padding:"14px 16px",
@@ -1476,7 +1503,13 @@ function ResultScreen({icon,title,subtitle,correct,wrong,percent,stats,actions,T
 function TicketResultScreen({setScreen,result,T,C}) {
   if(!result){setScreen("tickets");return null;}
   const {correct,total,wrong}=result,percent=Math.round((correct/total)*100);
-  return <ResultScreen T={T} C={C} icon={wrong<=2?"pass":"fail"} title={wrong<=2?T.greatResult:T.failed} subtitle={`Bilet ${result.ticket?.id} ${T.ticketDone}`} correct={correct} wrong={wrong} total={total} percent={percent} actions={[{label:T.otherTicket,onClick:()=>setScreen("tickets")},{label:T.goHome,onClick:()=>setScreen("home")}]}/>;
+  return <ResultScreen T={T} C={C} icon={wrong<=2?"pass":"fail"} title={wrong<=2?T.greatResult:T.keepPracticing} subtitle={`${T.ticket} ${result.ticket?.id} ${T.ticketDone}`} correct={correct} wrong={wrong} total={total} percent={percent} actions={[{label:T.otherTicket,onClick:()=>setScreen("tickets")},{label:T.goHome,onClick:()=>setScreen("home")}]}/>;
+}
+
+function PracticeResultScreen({setScreen,result,T,C}) {
+  if(!result){setScreen("tests");return null;}
+  const {correct,total}=result,wrong=total-correct,percent=Math.round((correct/total)*100);
+  return <ResultScreen T={T} C={C} icon={percent>=60?"pass":"fail"} title={percent>=60?T.greatResult:T.keepPracticing} subtitle={T.infiniteTest} correct={correct} wrong={wrong} total={total} percent={percent} actions={[{label:T.startTest,onClick:()=>setScreen("test-quiz")},{label:T.goHome,onClick:()=>setScreen("home")}]}/>;
 }
 
 function TestsScreen({setScreen,T,C,user}) {
@@ -1558,6 +1591,7 @@ function TestQuizScreen({setScreen,setLastTestResult,T,C,lang,savedQuestions,set
     </div>
     <div style={{padding:20}}>
       <div style={{fontWeight:700,fontSize:16,color:C.text,marginBottom:20,lineHeight:1.5}}>{getQ(q?.question,lang)}</div>
+      {q?.sign!=null&&<div style={{textAlign:"center",marginBottom:20,background:"#F1EFFD",borderRadius:20,padding:20}}><SignSVG item={q.sign}/></div>}
       <OptionsList options={getOpts(q?.options,lang)} correct={q?.correct||0} selected={selected} onSelect={handleAnswer} C={C}/>
       {answered&&(
         <div style={{marginTop:16,borderRadius:14,padding:"14px 16px",
@@ -1619,7 +1653,7 @@ function ExamScreen({setScreen,T,C,user}) {
   const examLimitReached = !isPro && examRemaining === 0;
   return <div style={SC.screen(C)}>
     <div style={{...SC.header(C),padding:"52px 20px 32px",textAlign:"center"}}>
-      <div style={{display:"flex",justifyContent:"center",marginBottom:12}}><IC.GraduationCap size={56} color="white"/></div>
+      <div style={{display:"flex",justifyContent:"center",marginBottom:12}}><IC.Brain size={56} color="white"/></div>
       <h2 style={{color:"white",fontSize:24,fontWeight:800,margin:0}}>{T.examTitle}</h2>
       <p style={{color:"rgba(255,255,255,0.8)",fontSize:14,margin:"4px 0 0"}}>{T.examReady}</p>
     </div>
@@ -1629,7 +1663,7 @@ function ExamScreen({setScreen,T,C,user}) {
         {[T.rule1,T.rule2,T.rule3,T.rule4].map((r,i)=><div key={i} style={{display:"flex",gap:8,marginBottom:10,alignItems:"flex-start"}}><div style={{width:6,height:6,borderRadius:"50%",background:C.primary,marginTop:6,flexShrink:0}}/><span style={{fontSize:14,color:C.subtext,lineHeight:1.5}}>{r}</span></div>)}
       </Card>
       <div style={{display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:12}}>
-        {[{lk:"questionCount",val:"20",Icon:IC.FileText,c:C.primary},{lk:"time",val:"20:00",Icon:IC.Clock,c:C.success},{lk:"errorLimit",val:"2",Icon:IC.AlertTriangle,c:C.danger}].map(s=>(
+        {[{lk:"questionCount",val:"20",Icon:IC.FileText,c:C.primary},{lk:"time",val:"15:00",Icon:IC.Clock,c:C.success},{lk:"errorLimit",val:T.free,Icon:IC.Brain,c:C.primary}].map(s=>(
           <Card key={s.lk} C={C} style={{textAlign:"center",padding:"16px 8px"}}><div style={{display:"flex",justifyContent:"center",marginBottom:6}}><s.Icon size={22} color={s.c}/></div><div style={{fontSize:18,fontWeight:800,color:s.c}}>{s.val}</div><div style={{fontSize:11,color:C.subtext}}>{T[s.lk]}</div></Card>
         ))}
       </div>
@@ -1637,7 +1671,7 @@ function ExamScreen({setScreen,T,C,user}) {
     {/* Sticky bottom button */}
     <div style={{position:"fixed",bottom:70,left:16,right:16,width:"calc(100% - 32px)",padding:"0 0 8px",zIndex:50}}>
       {!isPro && <div style={{textAlign:"center",marginBottom:8,fontSize:12,color:examLimitReached?C.danger:C.subtext}}>
-        Bugun qolgan: <strong style={{color:examLimitReached?C.danger:C.primary}}>{examRemaining}/{LIMITS.freeExamCount}</strong> ta bepul imtihon
+        Bugun qolgan: <strong style={{color:examLimitReached?C.danger:C.primary}}>{examRemaining}/{LIMITS.freeExamCount}</strong> ta bepul IQ test
       </div>}
       <button onClick={()=>{ if(examLimitReached){setScreen("exam-limit-gate");return;} setScreen("exam-quiz"); }}
         style={{width:"100%",padding:"16px",borderRadius:16,border:"none",background:examLimitReached?"#E2E8F0":`linear-gradient(135deg,${C.gradStart},${C.gradEnd})`,color:examLimitReached?C.muted:"white",fontSize:16,fontWeight:800,cursor:"pointer",boxShadow:examLimitReached?"none":`0 6px 20px ${C.primary}50`}}>
@@ -1649,37 +1683,83 @@ function ExamScreen({setScreen,T,C,user}) {
 
 function ExamQuizScreen({setScreen,setExamResult,T,C,lang,user}) {
   const isPro = user?.pro || false;
-  // Faqat Pro bo'lgan biletlar savollarini imtihonga kiritmaylik
+  // Pro to'plamlar jumboqlarini bepul IQ testga kiritmaymiz
   const allQs = tickets
     .filter(t => !t.isPro || isPro)
     .slice(0,10)
     .flatMap(t=>t.questions.slice(0,5));
   const [questions]=useState(()=>allQs.sort(()=>Math.random()-0.5).slice(0,20));
-  const [current,setCurrent]=useState(0);const [answers,setAnswers]=useState({});const [selected,setSelected]=useState(null);const [timeLeft,setTimeLeft]=useState(1200);const [wrongCount,setWrongCount]=useState(0);
-  useEffect(()=>{const t=setInterval(()=>setTimeLeft(p=>{if(p<=1){const c=Object.values(answers).filter((v,i)=>v===questions[i]?.correct).length;setExamResult({correct:c,total:questions.length,wrong:questions.length-c,passed:(questions.length-c)<=2});setScreen("exam-result");return 0;}return p-1;}),1000);return()=>clearInterval(t);},[]);
+  const [current,setCurrent]=useState(0);const [answers,setAnswers]=useState({});const [selected,setSelected]=useState(null);const [timeLeft,setTimeLeft]=useState(EXAM_SECONDS);
+  const answersRef=useRef({});
+  const finish=(na)=>{const c=Object.entries(na).filter(([i,v])=>v===questions[i]?.correct).length;incDailyCount('exams');setExamResult(iqResult(c,questions.length,Object.keys(na).length));setScreen("exam-result");};
+  useEffect(()=>{const t=setInterval(()=>setTimeLeft(p=>{if(p<=1){clearInterval(t);finish(answersRef.current);return 0;}return p-1;}),1000);return()=>clearInterval(t);},[]);
   const mins=Math.floor(timeLeft/60).toString().padStart(2,"0"),secs=(timeLeft%60).toString().padStart(2,"0"),q=questions[current];
-  const handleAnswer=(optIdx)=>{setSelected(optIdx);const nw=wrongCount+(optIdx!==q.correct?1:0);if(nw>2){const na={...answers,[current]:optIdx};const c=Object.values(na).filter((v,i)=>v===questions[i]?.correct).length;setTimeout(()=>{setExamResult({correct:c,total:questions.length,wrong:nw,passed:false});setScreen("exam-fail");},800);return;}setWrongCount(nw);setTimeout(()=>{const na={...answers,[current]:optIdx};setAnswers(na);if(current+1<questions.length){setCurrent(current+1);setSelected(null);}else{const c=Object.values(na).filter((v,i)=>v===questions[i]?.correct).length;const w=questions.length-c;incDailyCount('exams');setExamResult({correct:c,total:questions.length,wrong:w,passed:w<=2,percent:Math.round((c/questions.length)*100)});setScreen("exam-result");}},600);};
+  const answeredCount=Object.keys(answers).length;
+  const handleAnswer=(optIdx)=>{setSelected(optIdx);const na={...answers,[current]:optIdx};answersRef.current=na;setTimeout(()=>{setAnswers(na);if(current+1<questions.length){setCurrent(current+1);setSelected(null);}else finish(na);},400);};
   return <div style={{minHeight:"100vh",background:C.white}}>
     <div style={{...SC.header(C),padding:"50px 20px 20px"}}>
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:10}}>
         <div style={{background:"rgba(255,255,255,0.2)",borderRadius:12,padding:"6px 14px"}}><div style={{color:"rgba(255,255,255,0.7)",fontSize:10}}>{T.question}</div><div style={{color:"white",fontWeight:800,fontSize:16}}>{current+1}/{questions.length}</div></div>
         <div style={{background:"rgba(255,255,255,0.2)",borderRadius:12,padding:"6px 14px",display:"flex",alignItems:"center",gap:6}}><IC.Clock size={14} color="white"/><div><div style={{color:"rgba(255,255,255,0.7)",fontSize:10}}>{T.time}</div><div style={{color:"white",fontWeight:800,fontSize:16}}>{mins}:{secs}</div></div></div>
-        <div style={{background:wrongCount>0?"rgba(239,68,68,0.3)":"rgba(255,255,255,0.2)",borderRadius:12,padding:"6px 14px",display:"flex",alignItems:"center",gap:6}}><IC.AlertTriangle size={14} color={wrongCount>1?C.danger:"white"}/><div><div style={{color:"rgba(255,255,255,0.7)",fontSize:10}}>{T.errors}</div><div style={{color:wrongCount>1?C.danger:"white",fontWeight:800,fontSize:16}}>{wrongCount}/2</div></div></div>
+        <div style={{background:"rgba(255,255,255,0.2)",borderRadius:12,padding:"6px 14px",display:"flex",alignItems:"center",gap:6}}><IC.CheckCircle size={14} color="white"/><div><div style={{color:"rgba(255,255,255,0.7)",fontSize:10}}>{T.answered}</div><div style={{color:"white",fontWeight:800,fontSize:16}}>{answeredCount}/{questions.length}</div></div></div>
       </div>
       <div style={{display:"flex",gap:3}}>{questions.map((_,i)=><div key={i} style={{flex:1,height:4,borderRadius:100,background:i<current?"white":"rgba(255,255,255,0.3)"}}/>)}</div>
     </div>
     <div style={{padding:20}}>
       <div style={{fontWeight:700,fontSize:16,color:C.text,marginBottom:20,lineHeight:1.5}}>{getQ(q?.question,lang)}</div>
-      <OptionsList options={getOpts(q?.options,lang)} correct={q?.correct||0} selected={selected} onSelect={handleAnswer} C={C}/>
+      {q?.sign!=null&&<div style={{textAlign:"center",marginBottom:20,background:"#F1EFFD",borderRadius:20,padding:20}}><SignSVG item={q.sign}/></div>}
+      <OptionsList neutral options={getOpts(q?.options,lang)} correct={q?.correct||0} selected={selected} onSelect={handleAnswer} C={C}/>
     </div>
   </div>;
 }
 
+// ─── IQ NATIJA HISOBI ───
+// Taxminiy: to'g'ri javoblar ulushi 70–130 shkalaga o'tkaziladi, ±6 oraliq (μ=100, σ=15).
+// Haqiqiy me'yorlar tayyor bo'lgach almashtiriladi — "Dastlabki me'yorlar" belgisi shuning uchun.
+const EXAM_SECONDS = 15*60;
+function normCdf(z){const t=1/(1+0.2316419*Math.abs(z)),d=0.3989423*Math.exp(-z*z/2),p=d*t*(0.3193815+t*(-0.3565638+t*(1.781478+t*(-1.821256+t*1.330274))));return z>0?1-p:p;}
+function iqResult(correct,total,answered=total){
+  const percent=Math.round((correct/total)*100);
+  const mid=Math.round(70+percent*0.6), iqLow=mid-6, iqHigh=mid+6;
+  const pLow=Math.round(normCdf((iqLow-100)/15)*100), pHigh=Math.round(normCdf((iqHigh-100)/15)*100);
+  return {correct,total,wrong:total-correct,unanswered:total-answered,percent,iqLow,iqHigh,pLow,pHigh,passed:true};
+}
+
 function ExamResultScreen({setScreen,result,T,C}) {
   if(!result){setScreen("exam");return null;}
-  const {correct,total,wrong,passed}=result,percent=result.percent??Math.round((correct/total)*100);
-  const statsRows=passed?[{label:T.avgResult,value:"87%",color:C.success},{label:T.examCount,value:"8"},{label:T.passedExams,value:"5",color:C.success},{label:T.failedExams,value:"3",color:C.danger}]:null;
-  return <ResultScreen T={T} C={C} icon={passed?"pass":"fail"} title={passed?T.congrats:T.examFailed} subtitle={passed?T.examPassed:`${wrong} ${T.tooManyErrors}`} correct={correct} wrong={wrong} total={total} percent={percent} stats={statsRows} actions={passed?[{label:T.goHome,onClick:()=>setScreen("home")}]:[{label:T.retryExam,onClick:()=>setScreen("exam-quiz")},{label:T.goHome,onClick:()=>setScreen("home")}]}/>;
+  const r=result.iqLow?result:iqResult(result.correct,result.total);
+  const {correct,total,iqLow,iqHigh,pLow,pHigh}=r;
+  const W=300,H=90,x=v=>((v-55)/90)*W, y=v=>H-6-Math.exp(-((v-100)**2)/(2*15*15))*(H-16);
+  const curve=Array.from({length:61},(_,i)=>{const v=55+i*1.5;return `${x(v).toFixed(1)},${y(v).toFixed(1)}`;}).join(" ");
+  const band=Array.from({length:13},(_,i)=>{const v=iqLow+i;return `${x(v).toFixed(1)},${y(v).toFixed(1)}`;}).join(" ");
+  const statsRows=[{label:T.avgResult,value:"IQ 108"},{label:T.examCount,value:"8"},{label:T.passedExams,value:"IQ 114–126",color:C.primary},{label:T.failedExams,value:`IQ ${iqLow}–${iqHigh}`}];
+  return <div style={{minHeight:"100vh",background:C.white,padding:"20px 20px 96px"}}>
+    <div style={{textAlign:"center",padding:"40px 0 20px"}}>
+      <div style={{width:88,height:88,borderRadius:"50%",margin:"0 auto 14px",background:C.primary+"18",display:"flex",alignItems:"center",justifyContent:"center"}}><IC.Brain size={46} color={C.primary}/></div>
+      <div style={{fontSize:15,fontWeight:600,color:C.subtext,marginBottom:6}}>{T.iqBand}</div>
+      <div style={{fontSize:46,lineHeight:1.1,fontWeight:900,color:C.text,fontVariantNumeric:"tabular-nums",letterSpacing:"-1px"}}>{iqLow}–{iqHigh}</div>
+      <div style={{fontSize:14,color:C.subtext,marginTop:4}}>{T.iqPercentile.replace("{p}",`${pLow}–${pHigh}`)}</div>
+      <div style={{display:"inline-block",marginTop:10,padding:"4px 12px",borderRadius:20,background:"#E3F2F7",color:"#0E6E8C",fontSize:12,fontWeight:700}}>{T.iqProvisional}</div>
+    </div>
+    <Card C={C} style={{marginBottom:16,padding:"14px 10px"}}>
+      <svg width="100%" viewBox={`0 0 ${W} ${H}`} aria-hidden="true">
+        <polyline points={curve} fill="none" stroke={C.gray300} strokeWidth="2"/>
+        <polygon points={`${x(iqLow).toFixed(1)},${H-6} ${band} ${x(iqHigh).toFixed(1)},${H-6}`} fill={C.primary} opacity="0.25"/>
+        <polyline points={band} fill="none" stroke={C.primary} strokeWidth="3.5" strokeLinecap="round"/>
+        <line x1="0" y1={H-6} x2={W} y2={H-6} stroke={C.gray200} strokeWidth="1"/>
+        {[70,85,100,115,130].map(v=><text key={v} x={x(v)} y={H} textAnchor="middle" fontSize="9" fill={C.gray400}>{v}</text>)}
+      </svg>
+    </Card>
+    <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:16}}>
+      <Card C={C} style={{textAlign:"center",padding:"14px 8px"}}><div style={{fontSize:20,fontWeight:800,color:C.text}}>{correct}/{total}</div><div style={{fontSize:11,color:C.subtext}}>{T.correct}</div></Card>
+      <Card C={C} style={{textAlign:"center",padding:"14px 8px"}}><div style={{fontSize:20,fontWeight:800,color:C.text}}>{r.percent}%</div><div style={{fontSize:11,color:C.subtext}}>{T.result}</div></Card>
+    </div>
+    <Card C={C} style={{marginBottom:20}}>{statsRows.map(s=><div key={s.label} style={{display:"flex",justifyContent:"space-between",padding:"7px 0",borderBottom:`1px solid ${C.gray100}`}}><span style={{fontSize:14,color:C.subtext}}>{s.label}</span><span style={{fontSize:14,fontWeight:700,color:s.color||C.text}}>{s.value}</span></div>)}</Card>
+    <div style={{display:"flex",flexDirection:"column",gap:10}}>
+      <Btn C={C} onClick={()=>setScreen("home")}>{T.goHome}</Btn>
+      <Btn C={C} variant="outline" onClick={()=>setScreen("exam")}>{T.retryExam}</Btn>
+    </div>
+  </div>;
 }
 
 function StatsScreen({T,C}) {
@@ -1718,7 +1798,7 @@ function RatingScreen({T,C}) {
       <div style={{display:"flex",gap:8,marginBottom:20}}>{[T.daily,T.weekly,T.monthly,T.allTab].map((t,i)=><button key={t} onClick={()=>setTab(i)} style={{padding:"7px 14px",borderRadius:20,border:"none",cursor:"pointer",background:tab===i?C.primary:C.gray200,color:tab===i?"white":C.subtext,fontSize:13,fontWeight:600}}>{t}</button>)}</div>
       <div style={{display:"flex",justifyContent:"center",alignItems:"flex-end",gap:10,marginBottom:24}}>
         {po.map((pi,i)=>{const u=leaderboard[pi];return <div key={i} style={{textAlign:"center",flex:1}}>
-          <div style={{width:52,height:52,borderRadius:"50%",background:u.me?`linear-gradient(135deg,${C.primary},#5B9FFF)`:`linear-gradient(135deg,${gold[i]},rgba(255,255,255,0.5))`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 6px",fontWeight:800,fontSize:18,color:"white",boxShadow:u.me?`0 4px 16px ${C.primary}66`:"0 2px 8px rgba(0,0,0,0.1)"}}>{u.av}</div>
+          <div style={{width:52,height:52,borderRadius:"50%",background:u.me?`linear-gradient(135deg,${C.primary},#9C90FF)`:`linear-gradient(135deg,${gold[i]},rgba(255,255,255,0.5))`,display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 6px",fontWeight:800,fontSize:18,color:"white",boxShadow:u.me?`0 4px 16px ${C.primary}66`:"0 2px 8px rgba(0,0,0,0.1)"}}>{u.av}</div>
           <div style={{fontSize:13,fontWeight:700,color:C.text}}>{u.name}</div>
           <div style={{fontSize:12,color:C.primary,fontWeight:600}}>{u.xp} xp</div>
           <div style={{height:hs[i],background:gold[i],borderRadius:"10px 10px 0 0",marginTop:8,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,fontWeight:900,color:"white"}}>{pi+1}</div>
@@ -1726,7 +1806,7 @@ function RatingScreen({T,C}) {
       </div>
       {leaderboard.slice(3).map(u=><Card key={u.rank} C={C} style={{marginBottom:10,padding:"12px 16px",display:"flex",alignItems:"center",gap:12,...(u.me?{border:`2px solid ${C.primary}`}:{})}}>
         <div style={{fontSize:16,fontWeight:700,color:C.gray400,width:24,textAlign:"center"}}>{u.rank}</div>
-        <div style={{width:40,height:40,borderRadius:"50%",background:u.me?`linear-gradient(135deg,${C.primary},#5B9FFF)`:C.gray200,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,color:u.me?"white":C.gray600}}>{u.av}</div>
+        <div style={{width:40,height:40,borderRadius:"50%",background:u.me?`linear-gradient(135deg,${C.primary},#9C90FF)`:C.gray200,display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,color:u.me?"white":C.gray600}}>{u.av}</div>
         <div style={{flex:1}}><div style={{fontWeight:600,fontSize:14,color:C.text}}>{u.name}</div></div>
         <div style={{fontWeight:700,color:C.primary}}>{u.xp} xp</div>
       </Card>)}
@@ -1746,10 +1826,10 @@ function AboutScreen({setScreen, T, C, lang}) {
           <IC.ArrowLeft size={18} color="white"/>
         </button>
         <div style={{width:76,height:76,borderRadius:22,background:"rgba(255,255,255,0.18)",display:"flex",alignItems:"center",justifyContent:"center",margin:"0 auto 14px",boxShadow:"0 8px 24px rgba(0,0,0,0.2)"}}>
-          <span style={{color:"white",fontSize:38,fontWeight:900,fontFamily:"serif"}}>N</span>
+          <span style={{color:"white",fontSize:38,fontWeight:900,fontFamily:"serif"}}>Q</span>
         </div>
-        <h2 style={{color:"white",fontSize:24,fontWeight:900,margin:"0 0 6px"}}>Nazariy</h2>
-        <p style={{color:"rgba(255,255,255,0.7)",fontSize:13,margin:"0 0 4px"}}>Avtotest Ilovasi</p>
+        <h2 style={{color:"white",fontSize:24,fontWeight:900,margin:"0 0 6px"}}>IQuest</h2>
+        <p style={{color:"rgba(255,255,255,0.7)",fontSize:13,margin:"0 0 4px"}}>Aql sarguzashti</p>
         <p style={{color:"rgba(255,255,255,0.5)",fontSize:12,margin:0}}>v{APP_CONFIG.version}</p>
       </div>
 
@@ -1812,8 +1892,8 @@ function AboutScreen({setScreen, T, C, lang}) {
 
         {/* Versiya va huquq */}
         <div style={{textAlign:"center",padding:"12px 0",color:C.muted,fontSize:12}}>
-          <div style={{marginBottom:4}}>Nazariy v{APP_CONFIG.version}</div>
-          <div>© 2025 Nazariy Avtotest. Barcha huquqlar himoyalangan.</div>
+          <div style={{marginBottom:4}}>IQuest v{APP_CONFIG.version}</div>
+          <div>© {new Date().getFullYear()} IQuest. Barcha huquqlar himoyalangan.</div>
         </div>
       </div>
     </div>
@@ -1843,8 +1923,8 @@ function ReferralScreen({setScreen, T, C, user, addToast}) {
   };
 
   const shareRef = () => {
-    const text = `Nazariy avtotestga qo'shiling! Mening referal kodim: ${refCode}
-https://t.me/NazariyBot?start=${refCode}`;
+    const text = `IQuest'da aqlingizni sinang! Mening referal kodim: ${refCode}
+https://t.me/${APP_CONFIG.botUsername}?start=${refCode}`;
     if(window.Telegram?.WebApp?.switchInlineQuery) {
       window.Telegram.WebApp.switchInlineQuery(text);
     } else {
@@ -2008,10 +2088,10 @@ function ProfileScreen({setScreen,user,setUser,T,C,dark,setDark,lang,setLang,sav
   const menuItems=[
     {lk:"pro",      Icon:IC.Diamond,    ic:"#F59E0B", bg:"#FEF3C7", action:()=>setScreen("pro")},
     {lk:"referral", Icon:IC.Trophy,     ic:"#EF4444", bg:"#FEE2E2", action:()=>setScreen("referral")},
-    {lk:"lang",     Icon:IC.Globe,      ic:C.primary, bg:"#EBF2FF", right:LANGS[lang].label, action:()=>setShowLangModal(true)},
+    {lk:"lang",     Icon:IC.Globe,      ic:C.primary, bg:"#ECEAFB", right:LANGS[lang].label, action:()=>setShowLangModal(true)},
     {lk:"support",  Icon:IC.Headphones, ic:"#22C55E", bg:"#DCFCE7", right:"@"+APP_CONFIG.supportUsername, action:()=>openTg(APP_CONFIG.supportUsername)},
     {lk:"news",     Icon:IC.TelegramIcon, ic:"#229ED9", bg:"#E3F2FD", right:"@"+APP_CONFIG.newsChannel, action:()=>openTg(APP_CONFIG.newsChannel)},
-    {lk:"about",    Icon:IC.Info,       ic:C.primary, bg:"#EBF2FF", action:()=>setScreen("about")},
+    {lk:"about",    Icon:IC.Info,       ic:C.primary, bg:"#ECEAFB", action:()=>setScreen("about")},
   ];
 
   // Edit modal
@@ -2060,7 +2140,7 @@ function ProfileScreen({setScreen,user,setUser,T,C,dark,setDark,lang,setLang,sav
         ))}
 
         <button onClick={saveProfile}
-          style={{width:"100%",padding:"15px",borderRadius:16,border:"none",background:`linear-gradient(135deg,${C.gradStart},${C.gradEnd})`,color:"white",fontSize:15,fontWeight:800,cursor:"pointer",marginTop:4,boxShadow:"0 4px 16px rgba(26,107,255,0.3)"}}>
+          style={{width:"100%",padding:"15px",borderRadius:16,border:"none",background:`linear-gradient(135deg,${C.gradStart},${C.gradEnd})`,color:"white",fontSize:15,fontWeight:800,cursor:"pointer",marginTop:4,boxShadow:"0 4px 16px rgba(79,63,208,0.3)"}}>
           Saqlash
         </button>
       </div>
@@ -2100,7 +2180,7 @@ function ProfileScreen({setScreen,user,setUser,T,C,dark,setDark,lang,setLang,sav
           {item.lk==="lang"&&(
             <Card C={C} style={{marginBottom:10,padding:"14px 16px",display:"flex",alignItems:"center",justifyContent:"space-between"}}>
               <div style={{display:"flex",alignItems:"center",gap:12}}>
-                <div style={{width:38,height:38,borderRadius:12,background:dark?"#1E3A5F":"#FEF3C7",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
+                <div style={{width:38,height:38,borderRadius:12,background:dark?"#26224A":"#FEF3C7",display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0}}>
                   {dark?<IC.Moon size={18} color={C.primary}/>:<IC.Sun size={18} color={C.warning}/>}
                 </div>
                 <span style={{fontWeight:600,fontSize:14,color:C.text}}>{dark?T.darkMode:T.lightMode}</span>
@@ -2172,7 +2252,7 @@ function ProScreen({T,C,setScreen,addToast,setNotifs,notifSettings}) {
 
   // Karta raqami (admin o'zgartiradi)
   const CARD_NUMBER = "8600 1234 5678 9012";
-  const CARD_OWNER  = "NAZARIY AVTOTEST";
+  const CARD_OWNER  = "IQUEST";
 
   const copyCard=()=>{
     try{ navigator.clipboard.writeText(CARD_NUMBER.replace(/\s/g,"")); }catch{}
@@ -2520,17 +2600,17 @@ function ProScreen({T,C,setScreen,addToast,setNotifs,notifSettings}) {
 }
 // ─── NOTIFICATIONS DATA ───
 const INIT_NOTIFS = [
-  {id:1, type:"exam",   read:false, time:2,  titleKey:"notifExam",  body:{uz:"Bugun imtihon rejalashtirgan edingiz!",             ru:"Сегодня вы планировали сдать экзамен!",          kril:"Бугун имтиҳон режалаштирган эдингиз!"}},
-  {id:2, type:"result", read:false, time:15, titleKey:"notifResult", body:{uz:"Bilet 5 dan 90% natija oldingiz 🎉",                ru:"Вы набрали 90% за Билет 5 🎉",                   kril:"Билет 5 дан 90% натижа олдингиз 🎉"}},
-  {id:3, type:"new",    read:false, time:60, titleKey:"notifNew",   body:{uz:"Bilet 23 yangilandi. Ko'rib chiqing!",               ru:"Билет 23 обновлён. Проверьте!",                  kril:"Билет 23 янгиланди. Кўриб чиқинг!"}},
-  {id:4, type:"daily",  read:true,  time:120,titleKey:"notifDaily", body:{uz:"Kunlik maqsadingiz: 150 savol. Hali 80 ta qoldi.",   ru:"Ваша дневная цель: 150 вопросов. Осталось 80.", kril:"Кунлик мақсадингиз: 150 савол. Яна 80 та қолди."}},
-  {id:5, type:"result", read:true,  time:180,titleKey:"notifResult",body:{uz:"Test seriyangiz 12 ga yetdi. Zo'r!",                 ru:"Ваша серия достигла 12. Отлично!",               kril:"Тест серияngиз 12 га етди. Зўр!"}},
-  {id:6, type:"new",    read:true,  time:300,titleKey:"notifNew",   body:{uz:"5 ta yangi bilet qo'shildi. Sinab ko'ring!",         ru:"Добавлено 5 новых билетов. Попробуйте!",         kril:"5 та янги билет қўшилди. Синаб кўринг!"}},
-  {id:7, type:"daily",  read:true,  time:1440,titleKey:"notifDaily",body:{uz:"Kecha 3 ta bilet yakundingiz. Bugun davom eting!",   ru:"Вчера вы завершили 3 билета. Продолжайте!",      kril:"Кеча 3 та билет якундингиз. Бугун давом этинг!"}},
+  {id:1, type:"exam",   read:false, time:2,  titleKey:"notifExam",  body:{uz:"Bugun IQ test topshirishni rejalashtirgan edingiz!", ru:"Сегодня вы планировали пройти IQ-тест!",        kril:"Бугун IQ тест топширишни режалаштирган эдингиз!"}},
+  {id:2, type:"result", read:false, time:15, titleKey:"notifResult", body:{uz:"5-to'plamdan 90% natija oldingiz 🎉",               ru:"Вы набрали 90% в наборе 5 🎉",                  kril:"5-тўпламдан 90% натижа олдингиз 🎉"}},
+  {id:3, type:"new",    read:false, time:60, titleKey:"notifNew",   body:{uz:"23-to'plam yangilandi. Ko'rib chiqing!",             ru:"Набор 23 обновлён. Посмотрите!",                 kril:"23-тўплам янгиланди. Кўриб чиқинг!"}},
+  {id:4, type:"daily",  read:true,  time:120,titleKey:"notifDaily", body:{uz:"Kunlik maqsadingiz: 150 jumboq. Hali 80 ta qoldi.",  ru:"Ваша дневная цель: 150 задач. Осталось 80.",     kril:"Кунлик мақсадингиз: 150 жумбоқ. Яна 80 та қолди."}},
+  {id:5, type:"result", read:true,  time:180,titleKey:"notifResult",body:{uz:"Mashq seriyangiz 12 ga yetdi. Zo'r!",                ru:"Ваша серия достигла 12. Отлично!",               kril:"Машқ сериянгиз 12 га етди. Зўр!"}},
+  {id:6, type:"new",    read:true,  time:300,titleKey:"notifNew",   body:{uz:"5 ta yangi to'plam qo'shildi. Sinab ko'ring!",       ru:"Добавлено 5 новых наборов. Попробуйте!",         kril:"5 та янги тўплам қўшилди. Синаб кўринг!"}},
+  {id:7, type:"daily",  read:true,  time:1440,titleKey:"notifDaily",body:{uz:"Kecha 3 ta to'plamni yakunladingiz. Bugun davom eting!", ru:"Вчера вы завершили 3 набора. Продолжайте!",  kril:"Кеча 3 та тўпламни якунладингиз. Бугун давом этинг!"}},
 ];
 
 const NOTIF_ICONS = {
-  exam:   { Icon: IC.Clock,         bg:"#EBF2FF", color:"#1A6BFF" },
+  exam:   { Icon: IC.Clock,         bg:"#ECEAFB", color:"#4F3FD0" },
   result: { Icon: IC.CheckCircle,   bg:"#DCFCE7", color:"#22C55E" },
   new:    { Icon: IC.Ticket,        bg:"#FEF3C7", color:"#F59E0B" },
   daily:  { Icon: IC.Bell,          bg:"#F5F3FF", color:"#8B5CF6" },
@@ -2541,7 +2621,7 @@ function Toast({toasts}) {
   return (
     <div style={{position:"fixed",top:16,left:16,right:16,width:"calc(100% - 32px)",zIndex:999,pointerEvents:"none",display:"flex",flexDirection:"column",gap:8}}>
       {toasts.map(t=>(
-        <div key={t.id} style={{background:t.type==="success"?"#22C55E":t.type==="error"?"#EF4444":"#1A6BFF",color:"white",borderRadius:14,padding:"13px 16px",display:"flex",alignItems:"center",gap:10,boxShadow:"0 8px 24px rgba(0,0,0,0.25)",animation:"slideDown 0.3s ease"}}>
+        <div key={t.id} style={{background:t.type==="success"?"#22C55E":t.type==="error"?"#EF4444":"#4F3FD0",color:"white",borderRadius:14,padding:"13px 16px",display:"flex",alignItems:"center",gap:10,boxShadow:"0 8px 24px rgba(0,0,0,0.25)",animation:"slideDown 0.3s ease"}}>
           {t.type==="success"&&<IC.CheckCircle size={18} color="white"/>}
           {t.type==="error"&&<IC.XCircle size={18} color="white"/>}
           {t.type==="info"&&<IC.Bell size={18} color="white"/>}
@@ -2569,7 +2649,7 @@ function SearchScreen({setScreen,setActiveTicket,T,C,lang,savedQuestions}) {
   // Build all searchable data
   const allTickets=tickets.slice(0,20).map((t,i)=>({
     type:"ticket", id:t.id,
-    title:`Bilet ${t.id}`,
+    title:`${T.ticket} ${t.id}`,
     sub:`20 ${T.questions}`,
     progress:[95,90,80,100,75,null,null,null,null,null,88,null,null,null,null,null,null,null,null,null][i],
   }));
@@ -2584,7 +2664,7 @@ function SearchScreen({setScreen,setActiveTicket,T,C,lang,savedQuestions}) {
     }))
   );
 
-  const allSigns=SIGNS_CATEGORIES.flatMap((cat,ci)=>
+  const allSigns=GUIDE_CATEGORIES.flatMap((cat,ci)=>
     cat.items.map((item,ji)=>({
       type:"sign", key:`rules-${ci}-${ji}`,
       title:item[lang]||item.uz,
@@ -2596,7 +2676,7 @@ function SearchScreen({setScreen,setActiveTicket,T,C,lang,savedQuestions}) {
   const savedItems=savedQuestions.map(s=>({
     type:"saved", key:s.key,
     title:typeof s.question==="object"?(s.question[lang]||s.question.uz):s.question,
-    sub:s.ticketId==="rules"?"🚦 Yo'l qoidasi":`${T.ticket} ${s.ticketId}`,
+    sub:s.ticketId==="rules"?`💡 ${T.rules}`:`${T.ticket} ${s.ticketId}`,
     isRule:s.ticketId==="rules",
   }));
 
@@ -2605,7 +2685,7 @@ function SearchScreen({setScreen,setActiveTicket,T,C,lang,savedQuestions}) {
   const match=(item)=> q.length<2 ? false :
     (item.title||"").toLowerCase().includes(q)||
     (item.sub||"").toLowerCase().includes(q)||
-    (item.type==="ticket"&&`bilet ${item.id}`.includes(q))||
+    (item.type==="ticket"&&`${T.ticket} ${item.id}`.toLowerCase().includes(q))||
     (item.type==="ticket"&&String(item.id)===q);
 
   const ticketResults  = (filter==="all"||filter==="tickets")   ? allTickets.filter(match)   : [];
@@ -2615,18 +2695,18 @@ function SearchScreen({setScreen,setActiveTicket,T,C,lang,savedQuestions}) {
   const total=ticketResults.length+questionResults.length+signResults.length+savedResults.length;
 
   const popular=[
-    {label:"Piyoda yo'li",  q:"piyoda"},
-    {label:"60 km/s",       q:"60"},
-    {label:"To'xtash",      q:"to'xtash"},
-    {label:"Signal",        q:"signal"},
-    {label:"Bilet 1",       q:"bilet 1"},
+    {label:T.ticket+" 1",   q:(T.ticket+" 1").toLowerCase()},
+    {label:"IQ",            q:"iq"},
+    {label:"2, 4, 8",       q:"2, 4, 8"},
+    {label:"Matritsa",      q:"matritsa"},
+    {label:"Analogiya",     q:"analogiya"},
   ];
 
   const filters=[
     ["all",T.filterAll],
     ["tickets",T.filterTickets],
     ["questions",T.filterQuestions],
-    ["signs","Belgilar"],
+    ["signs",T.rules],
     ["saved",T.savedQ],
   ];
 
@@ -2690,7 +2770,7 @@ function SearchScreen({setScreen,setActiveTicket,T,C,lang,savedQuestions}) {
                     </div>
                     <div style={{flex:1,minWidth:0}}>
                       <div style={{fontSize:13,fontWeight:600,color:C.text,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>{title}</div>
-                      <div style={{fontSize:11,color:C.subtext}}>{s.ticketId==="rules"?<span style={{display:"flex",alignItems:"center",gap:4}}><IC.Traffic size={11} color={C.subtext}/>Yo'l qoidasi</span>:`${T.ticket} ${s.ticketId}`}</div>
+                      <div style={{fontSize:11,color:C.subtext}}>{s.ticketId==="rules"?<span style={{display:"flex",alignItems:"center",gap:4}}><IC.Lightbulb size={11} color={C.subtext}/>{T.rules}</span>:`${T.ticket} ${s.ticketId}`}</div>
                     </div>
                     <IC.ChevronRight size={14} color={C.gray400}/>
                   </ResultCard>
@@ -2755,10 +2835,10 @@ function SearchScreen({setScreen,setActiveTicket,T,C,lang,savedQuestions}) {
                 {/* Road signs */}
                 {signResults.length>0&&(
                   <div style={{marginBottom:16}}>
-                    <div style={{fontSize:11,fontWeight:700,color:C.subtext,marginBottom:8,textTransform:"uppercase",letterSpacing:"0.5px"}}>Yo'l belgilari</div>
+                    <div style={{fontSize:11,fontWeight:700,color:C.subtext,marginBottom:8,textTransform:"uppercase",letterSpacing:"0.5px"}}>{T.rules}</div>
                     {signResults.map((item,i)=>(
                       <ResultCard key={item.key||i} onClick={()=>setScreen("rules")}>
-                        <div style={{width:36,height:36,borderRadius:11,background:item.catBg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:18}}>{item.catIcon}</div>
+                        <div style={{width:36,height:36,borderRadius:11,background:item.catBg,display:"flex",alignItems:"center",justifyContent:"center",flexShrink:0,fontSize:18}}><TopicIcon icon={item.catIcon} size={18} color={item.catColor}/></div>
                         <div style={{flex:1,minWidth:0}}>
                           <div style={{fontSize:13,fontWeight:600,color:C.text,lineHeight:1.4,marginBottom:2}}>{highlight(item.title,query)}</div>
                           <div style={{fontSize:11,color:C.subtext}}>{item.sub}</div>
@@ -2836,7 +2916,7 @@ function SavedQuestionsScreen({setScreen,savedQuestions,setSavedQuestions,T,C,la
         <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:12}}>
           <div style={{background:q.ticketId==="rules"?"#DCFCE7":C.primary+"22",borderRadius:8,padding:"4px 10px"}}>
             <span style={{fontSize:11,fontWeight:700,color:q.ticketId==="rules"?"#22C55E":C.primary}}>
-              {q.ticketId==="rules"?<span style={{display:"flex",alignItems:"center",gap:4}}><IC.Traffic size={11} color={C.subtext}/>Yo'l qoidasi</span>:`${T.ticket} ${q.ticketId} · #${q.questionId}`}
+              {q.ticketId==="rules"?<span style={{display:"flex",alignItems:"center",gap:4}}><IC.Lightbulb size={11} color={C.subtext}/>{T.rules}</span>:`${T.ticket} ${q.ticketId} · #${q.questionId}`}
             </span>
           </div>
           <IC.Bookmark size={16} color="#FFD700"/>
@@ -2844,7 +2924,7 @@ function SavedQuestionsScreen({setScreen,savedQuestions,setSavedQuestions,T,C,la
         <div style={{fontWeight:700,fontSize:16,color:C.text,marginBottom:20,lineHeight:1.5}}>
           {typeof q.question==="object"?(q.question[lang]||q.question.uz):getQ(q.question,lang)}
         </div>
-        {q.sign!=null&&<div style={{textAlign:"center",marginBottom:20,background:"linear-gradient(135deg,#FEF3C7,#FDE68A)",borderRadius:20,padding:16}}><SignSVG type={SIGNS[q.sign%8]}/></div>}
+        {q.sign!=null&&<div style={{textAlign:"center",marginBottom:20,background:"#F1EFFD",borderRadius:20,padding:16}}><SignSVG item={q.sign}/></div>}
         {q.ticketId!=="rules"&&q.options&&<OptionsList options={getOpts(q.options,lang)} correct={q.correct} selected={selected} onSelect={handleAns} C={C}/>}
         {isSel&&(
           <div style={{background:selected===q.correct?"#DCFCE7":"#FEE2E2",borderRadius:14,padding:"12px 16px",marginTop:4,display:"flex",alignItems:"center",gap:10}}>
@@ -2904,7 +2984,7 @@ function SavedQuestionsScreen({setScreen,savedQuestions,setSavedQuestions,T,C,la
                 <div style={{display:"flex",alignItems:"center",gap:8}}>
                   <div style={{background:isRule?"#DCFCE7":"#FEF3C7",borderRadius:8,padding:"4px 10px"}}>
                     <span style={{fontSize:11,fontWeight:700,color:isRule?"#22C55E":"#F59E0B"}}>
-                      {isRule?<span style={{display:"flex",alignItems:"center",gap:4}}><IC.Traffic size={11} color={C.subtext}/>Yo'l qoidasi</span>:`${T.ticket} ${q.ticketId}`}
+                      {isRule?<span style={{display:"flex",alignItems:"center",gap:4}}><IC.Lightbulb size={11} color={C.subtext}/>{T.rules}</span>:`${T.ticket} ${q.ticketId}`}
                     </span>
                   </div>
                   {!isRule&&<span style={{fontSize:11,color:C.subtext}}>#{q.questionId}</span>}
@@ -2917,7 +2997,7 @@ function SavedQuestionsScreen({setScreen,savedQuestions,setSavedQuestions,T,C,la
                 </div>
               </div>
               <p style={{margin:"0 0 12px",fontSize:14,fontWeight:600,color:C.text,lineHeight:1.5}}>{questionText}</p>
-              {q.sign!=null&&<div style={{background:"#FEF3C7",borderRadius:12,padding:"10px",marginBottom:10,display:"flex",justifyContent:"center"}}><SignSVG type={SIGNS[q.sign%8]}/></div>}
+              {q.sign!=null&&<div style={{background:"#F1EFFD",borderRadius:12,padding:"10px",marginBottom:10,display:"flex",justifyContent:"center"}}><SignSVG item={q.sign}/></div>}
               {!isRule&&q.options&&(
                 <div style={{display:"flex",flexDirection:"column",gap:6}}>
                   {getOpts(q.options,lang).map((opt,i)=>(
@@ -2964,9 +3044,9 @@ function NotificationsScreen({setScreen,notifs,setNotifs,notifSettings,setNotifS
 
   const settingsList=[
     {key:"daily",  lk:"notifDaily",  desc:{uz:"Kunlik maqsad va eslatmalar",ru:"Ежедневные цели и напоминания",kril:"Кунлик мақсад ва эслатмалар"}},
-    {key:"result", lk:"notifResult", desc:{uz:"Test va bilet natijalari",ru:"Результаты тестов и билетов",kril:"Тест ва билет натижалари"}},
-    {key:"new",    lk:"notifNew",    desc:{uz:"Yangi biletlar va savollar",ru:"Новые билеты и вопросы",kril:"Янги билетлар ва саволлар"}},
-    {key:"exam",   lk:"notifExam",   desc:{uz:"Imtihon eslatmalari",ru:"Напоминания об экзамене",kril:"Имтиҳон эслатмалари"}},
+    {key:"result", lk:"notifResult", desc:{uz:"Test va to'plam natijalari",ru:"Результаты тестов и наборов",kril:"Тест ва тўплам натижалари"}},
+    {key:"new",    lk:"notifNew",    desc:{uz:"Yangi to'plamlar va jumboqlar",ru:"Новые наборы и задачи",kril:"Янги тўпламлар ва жумбоқлар"}},
+    {key:"exam",   lk:"notifExam",   desc:{uz:"IQ test eslatmalari",ru:"Напоминания об IQ-тесте",kril:"IQ тест эслатмалари"}},
   ];
 
   const enabledCount=Object.values(notifSettings).filter(Boolean).length;
@@ -3017,7 +3097,7 @@ function NotificationsScreen({setScreen,notifs,setNotifs,notifSettings,setNotifS
                   {s.key==="daily"&&<IC.Bell size={18} color={notifSettings[s.key]?"#8B5CF6":C.gray400}/>}
                   {s.key==="result"&&<IC.CheckCircle size={18} color={notifSettings[s.key]?"#22C55E":C.gray400}/>}
                   {s.key==="new"&&<IC.Ticket size={18} color={notifSettings[s.key]?"#F59E0B":C.gray400}/>}
-                  {s.key==="exam"&&<IC.Clock size={18} color={notifSettings[s.key]?"#1A6BFF":C.gray400}/>}
+                  {s.key==="exam"&&<IC.Clock size={18} color={notifSettings[s.key]?"#4F3FD0":C.gray400}/>}
                 </div>
                 <div>
                   <div style={{fontWeight:600,fontSize:14,color:notifSettings[s.key]?C.text:C.gray400,transition:"color 0.2s"}}>{T[s.lk]}</div>
@@ -3126,16 +3206,14 @@ function NotificationsScreen({setScreen,notifs,setNotifs,notifSettings,setNotifS
 
 // ─── TOPICS SCREEN ───
 const TOPICS_DATA = [
-  { icon:"traffic", title:{uz:"Svetoforlar",ru:"Светофоры",kril:"Светофорлар"}, count:12, color:"#1A6BFF", bg:"#EBF2FF" },
-  { icon:"roadsign", title:{uz:"Yo'l belgilari",ru:"Дорожные знаки",kril:"Йўл белгилари"}, count:28, color:"#22C55E", bg:"#DCFCE7" },
-  { icon:"↔️", title:{uz:"Harakatlanish tartibi",ru:"Порядок движения",kril:"Ҳаракатланиш тартиби"}, count:20, color:"#F59E0B", bg:"#FEF3C7" },
-  { icon:"refresh", title:{uz:"Kesishmalar",ru:"Перекрёстки",kril:"Кесишмалар"}, count:15, color:"#8B5CF6", bg:"#F5F3FF" },
-  { icon:"walk", title:{uz:"Piyodalar",ru:"Пешеходы",kril:"Пиёдалар"}, count:10, color:"#EC4899", bg:"#FCE7F3" },
-  { icon:"weather", title:{uz:"Ob-havo sharoiti",ru:"Погодные условия",kril:"Об-ҳаво шароити"}, count:8, color:"#0EA5E9", bg:"#E0F2FE" },
-  { icon:"speed", title:{uz:"Tezlik chegarasi",ru:"Скорость",kril:"Тезлик чегараси"}, count:9, color:"#EF4444", bg:"#FEE2E2" },
-  { icon:"🅿️", title:{uz:"To'xtash va turish",ru:"Остановка и стоянка",kril:"Тўхташ ва туриш"}, count:11, color:"#F97316", bg:"#FFEDD5" },
-  { icon:"ambulance", title:{uz:"Maxsus transport",ru:"Спецтранспорт",kril:"Махсус транспорт"}, count:6, color:"#14B8A6", bg:"#CCFBF1" },
-  { icon:"wrench", title:{uz:"Texnik holat",ru:"Техническое состояние",kril:"Техник ҳолат"}, count:7, color:"#6366F1", bg:"#EEF2FF" },
+  { icon:"numbers",   title:{uz:"Sonlar qatori",ru:"Числовые ряды",kril:"Сонлар қатори"}, count:24, color:"#4F3FD0", bg:"#ECEAFB" },
+  { icon:"pattern",   title:{uz:"Naqsh va matritsalar",ru:"Закономерности и матрицы",kril:"Нақш ва матрицалар"}, count:30, color:"#0E6E8C", bg:"#E3F2F7" },
+  { icon:"verbal",    title:{uz:"So'z va analogiyalar",ru:"Слова и аналогии",kril:"Сўз ва аналогиялар"}, count:20, color:"#8A5A00", bg:"#FBF1DD" },
+  { icon:"logic",     title:{uz:"Mantiqiy xulosa",ru:"Логические выводы",kril:"Мантиқий хулоса"}, count:18, color:"#7C3AED", bg:"#F5F3FF" },
+  { icon:"spatial",   title:{uz:"Fazoviy tasavvur",ru:"Пространственное мышление",kril:"Фазовий тасаввур"}, count:22, color:"#EC4899", bg:"#FCE7F3" },
+  { icon:"memory",    title:{uz:"Xotira",ru:"Память",kril:"Хотира"}, count:12, color:"#077350", bg:"#E5F3EC" },
+  { icon:"attention", title:{uz:"Diqqat",ru:"Внимание",kril:"Диққат"}, count:14, color:"#B42F35", bg:"#FBE9EA" },
+  { icon:"speedcalc", title:{uz:"Tezkor hisob",ru:"Быстрый счёт",kril:"Тезкор ҳисоб"}, count:16, color:"#F97316", bg:"#FFEDD5" },
 ];
 
 function TopicsScreen({setScreen,T,C,lang}) {
@@ -3149,7 +3227,7 @@ function TopicsScreen({setScreen,T,C,lang}) {
         {TOPICS_DATA.map((topic,i)=>(
           <div key={i} style={{background:C.card,borderRadius:18,padding:16,cursor:"pointer",border:`1px solid ${C.cardBorder}`,boxShadow:"0 1px 6px rgba(0,0,0,0.05)",transition:"transform 0.15s"}}>
             <div style={{width:44,height:44,borderRadius:14,background:topic.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:22,marginBottom:10}}>
-              {topic.icon}
+              <TopicIcon icon={topic.icon} size={22} color={topic.color}/>
             </div>
             <div style={{fontWeight:700,fontSize:13,color:C.text,marginBottom:4,lineHeight:1.3}}>
               {topic.title[lang]||topic.title.uz}
@@ -3158,7 +3236,7 @@ function TopicsScreen({setScreen,T,C,lang}) {
               {topic.count} {T.questions}
             </div>
             <div style={{marginTop:8,height:4,background:C.gray200,borderRadius:100}}>
-              <div style={{height:"100%",width:`${[65,40,0,80,55,0,30,70,0,45][i]||0}%`,background:topic.color,borderRadius:100}}/>
+              <div style={{height:"100%",width:`${[65,40,0,80,55,0,30,70][i]||0}%`,background:topic.color,borderRadius:100}}/>
             </div>
           </div>
         ))}
@@ -3168,131 +3246,87 @@ function TopicsScreen({setScreen,T,C,lang}) {
 }
 
 // ─── RULES SCREEN ───
-const SIGNS_CATEGORIES = [
+const GUIDE_CATEGORIES = [
   {
-    id:"info",
-    icon:"ℹ️",
-    color:"#0EA5E9", bg:"#E0F2FE",
-    title:{uz:"Axborot belgilari",ru:"Информационные знаки",kril:"Ахборот белгилари"},
-    desc:{uz:"Yo'l sharoiti va harakat tartibi haqida ma'lumot beruvchi belgilar",ru:"Знаки, информирующие об условиях движения",kril:"Йўл шароити ва ҳаракат тартиби ҳақида маълумот берувчи белгилар"},
-    count:34,
+    id:"numbers",
+    icon:"numbers",
+    color:"#4F3FD0", bg:"#ECEAFB",
+    title:{uz:"Sonlar qatori",ru:"Числовые ряды",kril:"Сонлар қатори"},
+    desc:{uz:"Qatordagi qonuniyatni topib, keyingi sonni aniqlash",ru:"Найти закономерность ряда и определить следующее число",kril:"Қатордаги қонуниятни топиб, кейинги сонни аниқлаш"},
+    count:5,
     items:[
-      {uz:"5.1 — Avtomobil yo'li boshlanishi",ru:"5.1 — Начало автомобильной дороги",kril:"5.1 — Автомобил йўли бошланиши"},
-      {uz:"5.3 — Bir tomonlama harakat boshlanishi",ru:"5.3 — Начало одностороннего движения",kril:"5.3 — Бир томонлама ҳаракат бошланиши"},
-      {uz:"5.5 — Piyodalar yo'lkasi",ru:"5.5 — Пешеходная дорожка",kril:"5.5 — Пиёдалар йўлкаси"},
-      {uz:"5.7 — Velosiped yo'lkasi",ru:"5.7 — Велосипедная дорожка",kril:"5.7 — Велосипед йўлкаси"},
-      {uz:"5.11 — Aholi punkti boshlanishi",ru:"5.11 — Начало населённого пункта",kril:"5.11 — Аҳоли пункти бошланиши"},
-      {uz:"5.15 — To'g'ri va chapga harakat yo'nalishi",ru:"5.15 — Направление движения прямо и налево",kril:"5.15 — Тўғри ва чапга ҳаракат йўналиши"},
+      {uz:"Avval qo'shni sonlar farqini yozing",ru:"Сначала выпишите разности соседних чисел",kril:"Аввал қўшни сонлар фарқини ёзинг"},
+      {uz:"Farq o'zgarmasa — arifmetik, nisbat o'zgarmasa — geometrik qator",ru:"Постоянная разность — арифметический ряд, постоянное отношение — геометрический",kril:"Фарқ ўзгармаса — арифметик, нисбат ўзгармаса — геометрик қатор"},
+      {uz:"Farqlarning o'zi ham qator bo'lishi mumkin (+3, +5, +7…)",ru:"Разности тоже могут образовывать ряд (+3, +5, +7…)",kril:"Фарқларнинг ўзи ҳам қатор бўлиши мумкин (+3, +5, +7…)"},
+      {uz:"Ikki oldingi sonning yig'indisini tekshiring (Fibonachchi)",ru:"Проверьте сумму двух предыдущих (Фибоначчи)",kril:"Икки олдинги соннинг йиғиндисини текширинг (Фибоначчи)"},
+      {uz:"Juft va toq o'rinlarni alohida ko'rib chiqing",ru:"Рассмотрите чётные и нечётные позиции отдельно",kril:"Жуфт ва тоқ ўринларни алоҳида кўриб чиқинг"},
     ]
   },
   {
-    id:"order",
-    icon:"mandatory",
-    color:"#1A6BFF", bg:"#EBF2FF",
-    title:{uz:"Buyuruvchi belgilar",ru:"Предписывающие знаки",kril:"Буйрувчи белгилар"},
-    desc:{uz:"Haydovchilar bajarishi majburiy bo'lgan harakatlarni ko'rsatuvchi belgilar",ru:"Знаки, указывающие обязательные для выполнения действия",kril:"Ҳайдовчилар бажариши мажбурий бўлган ҳаракатларни кўрсатувчи белгилар"},
-    count:21,
+    id:"pattern",
+    icon:"pattern",
+    color:"#0E6E8C", bg:"#E3F2F7",
+    title:{uz:"Naqsh va matritsalar",ru:"Закономерности и матрицы",kril:"Нақш ва матрицалар"},
+    desc:{uz:"3×3 jadvalda yetishmayotgan katakni topish",ru:"Найти недостающую клетку в таблице 3×3",kril:"3×3 жадвалда етишмаётган катакни топиш"},
+    count:4,
     items:[
-      {uz:"4.1 — To'g'ri harakat",ru:"4.1 — Движение прямо",kril:"4.1 — Тўғри ҳаракат"},
-      {uz:"4.2 — O'ngga harakat",ru:"4.2 — Движение направо",kril:"4.2 — Ўнгга ҳаракат"},
-      {uz:"4.3 — Chapga harakat",ru:"4.3 — Движение налево",kril:"4.3 — Чапга ҳаракат"},
-      {uz:"4.5 — To'g'ri yoki o'ngga harakat",ru:"4.5 — Движение прямо или направо",kril:"4.5 — Тўғри ёки ўнгга ҳаракат"},
-      {uz:"4.7 — O'ngdan aylanib o'tish",ru:"4.7 — Объезд препятствия справа",kril:"4.7 — Ўнгдан айланиб ўтиш"},
-      {uz:"4.9 — Aylana bo'ylab harakat",ru:"4.9 — Движение по кольцу",kril:"4.9 — Айлана бўйлаб ҳаракат"},
+      {uz:"Avval qatorlarni, keyin ustunlarni solishtiring",ru:"Сравните сначала строки, затем столбцы",kril:"Аввал қаторларни, кейин устунларни солиштиринг"},
+      {uz:"Soni, shakli, rangi va yo'nalishi — alohida-alohida",ru:"Количество, форма, цвет и направление — по отдельности",kril:"Сони, шакли, ранги ва йўналиши — алоҳида-алоҳида"},
+      {uz:"Uchinchi katak ko'pincha birinchi ikkitasining yig'indisi yoki farqi",ru:"Третья клетка часто — сумма или разность первых двух",kril:"Учинчи катак кўпинча биринчи иккитасининг йиғиндиси ёки фарқи"},
+      {uz:"Javobni variantlardan emas, qoidadan boshlab toping",ru:"Выводите ответ из правила, а не из вариантов",kril:"Жавобни вариантлардан эмас, қоидадан бошлаб топинг"},
     ]
   },
   {
-    id:"priority",
-    icon:"⭐",
-    color:"#F59E0B", bg:"#FEF3C7",
-    title:{uz:"Imtiyoz belgilari",ru:"Знаки приоритета",kril:"Имтиёз белгилари"},
-    desc:{uz:"Kesishmalardagi va tor yo'llardagi harakatlanish tartibini belgilovchi belgilar",ru:"Знаки, устанавливающие порядок проезда перекрёстков и узких участков",kril:"Кесишмалардаги ва тор йўллардаги ҳаракатланиш тартибини белгиловчи белгилар"},
-    count:8,
+    id:"verbal",
+    icon:"verbal",
+    color:"#8A5A00", bg:"#FBF1DD",
+    title:{uz:"So'z va analogiyalar",ru:"Слова и аналогии",kril:"Сўз ва аналогиялар"},
+    desc:{uz:"So'zlar orasidagi bog'liqlikni topish",ru:"Найти связь между словами",kril:"Сўзлар орасидаги боғлиқликни топиш"},
+    count:3,
     items:[
-      {uz:"2.1 — Asosiy yo'l",ru:"2.1 — Главная дорога",kril:"2.1 — Асосий йўл"},
-      {uz:"2.2 — Asosiy yo'l tugashi",ru:"2.2 — Конец главной дороги",kril:"2.2 — Асосий йўл тугаши"},
-      {uz:"2.3 — Ikkilamchi yo'lga chiqish",ru:"2.3 — Пересечение со второстепенной дорогой",kril:"2.3 — Иккиламчи йўлга чиқиш"},
-      {uz:"2.4 — Yo'l bering",ru:"2.4 — Уступите дорогу",kril:"2.4 — Йўл беринг"},
-      {uz:"2.5 — To'xtamay o'tish taqiqlanadi",ru:"2.5 — Движение без остановки запрещено",kril:"2.5 — Тўхтамай ўтиш тақиқланади"},
-      {uz:"2.7 — Imtiyozli yo'l harakati",ru:"2.7 — Преимущество перед встречным движением",kril:"2.7 — Имтиёзли йўл ҳаракати"},
+      {uz:"Juftlik orasidagi munosabatni bitta gap bilan ayting",ru:"Сформулируйте связь пары одной фразой",kril:"Жуфтлик орасидаги муносабатни битта гап билан айтинг"},
+      {uz:"Munosabat turlari: vosita–vazifa, qism–butun, sabab–oqibat",ru:"Типы связей: предмет–назначение, часть–целое, причина–следствие",kril:"Муносабат турлари: восита–вазифа, қисм–бутун, сабаб–оқибат"},
+      {uz:"Ortiqchasini topishda umumiy guruhni aniqlang",ru:"Для поиска лишнего определите общую группу",kril:"Ортиқчасини топишда умумий гуруҳни аниқланг"},
     ]
   },
   {
-    id:"prohibit",
-    icon:"prohibit",
-    color:"#EF4444", bg:"#FEE2E2",
-    title:{uz:"Taqiqlovchi belgilar",ru:"Запрещающие знаки",kril:"Тақиқловчи белгилар"},
-    desc:{uz:"Muayyan harakatlarni taqiqlovchi yoki cheklovchi belgilar",ru:"Знаки, вводящие или отменяющие ограничения движения",kril:"Муайян ҳаракатларни тақиқловчи ёки чекловчи белгилар"},
-    count:42,
+    id:"logic",
+    icon:"logic",
+    color:"#7C3AED", bg:"#F5F3FF",
+    title:{uz:"Mantiqiy xulosa",ru:"Логические выводы",kril:"Мантиқий хулоса"},
+    desc:{uz:"Berilgan shartlardan to'g'ri xulosa chiqarish",ru:"Сделать верный вывод из условий",kril:"Берилган шартлардан тўғри хулоса чиқариш"},
+    count:4,
     items:[
-      {uz:"3.1 — Kirish taqiqlanadi",ru:"3.1 — Въезд запрещён",kril:"3.1 — Кириш тақиқланади"},
-      {uz:"3.2 — Harakatlanish taqiqlanadi",ru:"3.2 — Движение запрещено",kril:"3.2 — Ҳаракатланиш тақиқланади"},
-      {uz:"3.17 — To'xtash taqiqlanadi",ru:"3.17 — Остановка запрещена",kril:"3.17 — Тўхташ тақиқланади"},
-      {uz:"3.18 — Turish taqiqlanadi",ru:"3.18 — Стоянка запрещена",kril:"3.18 — Туриш тақиқланади"},
-      {uz:"3.20 — O'tib ketish taqiqlanadi",ru:"3.20 — Обгон запрещён",kril:"3.20 — Ўтиб кетиш тақиқланади"},
-      {uz:"3.24 — Maksimal tezlik chegarasi",ru:"3.24 — Ограничение максимальной скорости",kril:"3.24 — Максимал тезлик чегараси"},
+      {uz:"Faqat berilgan ma'lumotga tayaning, taxmin qo'shmang",ru:"Опирайтесь только на данные, не добавляйте догадки",kril:"Фақат берилган маълумотга таянинг, тахмин қўшманг"},
+      {uz:"\"Barcha\", \"ba'zi\", \"hech bir\" so'zlariga diqqat qiling",ru:"Следите за словами «все», «некоторые», «ни один»",kril:"«Барча», «баъзи», «ҳеч бир» сўзларига диққат қилинг"},
+      {uz:"Shartlarni chizma yoki doiralar bilan tasvirlang",ru:"Изобразите условия схемой или кругами",kril:"Шартларни чизма ёки доиралар билан тасвирланг"},
+      {uz:"Tuzoq savollarda birlik miqdorini hisoblang (1 mashina — 1 detal)",ru:"В задачах-ловушках считайте на единицу (1 станок — 1 деталь)",kril:"Тузоқ саволларда бирлик миқдорини ҳисобланг (1 машина — 1 детал)"},
     ]
   },
   {
-    id:"warning",
-    icon:"warning",
-    color:"#F97316", bg:"#FFEDD5",
-    title:{uz:"Ogohlantiruvchi belgilar",ru:"Предупреждающие знаки",kril:"Огоҳлантирувчи белгилар"},
-    desc:{uz:"Xavfli yo'l uchastkasi va sharoitlari haqida oldindan ogohlantiruvchi belgilar",ru:"Знаки, предупреждающие об опасных участках дороги",kril:"Хавфли йўл участкаси ва шароитлари ҳақида олдиндан огоҳлантирувчи белгилар"},
-    count:29,
+    id:"spatial",
+    icon:"spatial",
+    color:"#EC4899", bg:"#FCE7F3",
+    title:{uz:"Fazoviy tasavvur",ru:"Пространственное мышление",kril:"Фазовий тасаввур"},
+    desc:{uz:"Shakllarni xayolda aylantirish va solishtirish",ru:"Мысленно вращать и сравнивать фигуры",kril:"Шаклларни хаёлда айлантириш ва солиштириш"},
+    count:3,
     items:[
-      {uz:"1.1 — Xavfli burilish (o'ngga)",ru:"1.1 — Опасный поворот (направо)",kril:"1.1 — Хавфли бурилиш (ўнгга)"},
-      {uz:"1.3 — Ko'p burilishlar",ru:"1.3 — Опасные повороты",kril:"1.3 — Кўп бурилишлар"},
-      {uz:"1.5 — Tekis bo'lmagan yo'l",ru:"1.5 — Неровная дорога",kril:"1.5 — Текис бўлмаган йўл"},
-      {uz:"1.11 — Temir yo'l kesishmasi (shlagbaum bilan)",ru:"1.11 — Ж/д переезд со шлагбаумом",kril:"1.11 — Темир йўл кесишмаси (шлагбаум билан)"},
-      {uz:"1.21 — Piyodalar o'tish joyi",ru:"1.21 — Пешеходный переход",kril:"1.21 — Пиёдалар ўтиш жойи"},
-      {uz:"1.23 — Bolalar",ru:"1.23 — Дети",kril:"1.23 — Болалар"},
+      {uz:"Shaklning bitta o'ziga xos belgisini tanlab, uni kuzating",ru:"Выберите одну особую деталь фигуры и следите за ней",kril:"Шаклнинг битта ўзига хос белгисини танлаб, уни кузатинг"},
+      {uz:"Aylantirish va ko'zgu aksini farqlang",ru:"Отличайте поворот от зеркального отражения",kril:"Айлантириш ва кўзгу аксини фарқланг"},
+      {uz:"Burchaklar va tomonlar sonini sanang",ru:"Считайте углы и стороны",kril:"Бурчаклар ва томонлар сонини сананг"},
     ]
   },
   {
-    id:"additional",
-    icon:"info",
-    color:"#8B5CF6", bg:"#F5F3FF",
-    title:{uz:"Qo'shimcha axborot belgilari",ru:"Знаки дополнительной информации",kril:"Қўшимча ахборот белгилари"},
-    desc:{uz:"Boshqa belgilar ta'sirini aniqlashtiruvchi yoki cheklovchi jadvallar",ru:"Таблички, уточняющие или ограничивающие действие других знаков",kril:"Бошқа белгилар таъсирини аниқлаштирувчи ёки чекловчи жадваллар"},
-    count:18,
+    id:"time",
+    icon:"tip",
+    color:"#077350", bg:"#E5F3EC",
+    title:{uz:"Vaqtni boshqarish",ru:"Управление временем",kril:"Вақтни бошқариш"},
+    desc:{uz:"15 daqiqalik testda sokin va tekis ishlash",ru:"Спокойная и ровная работа в 15-минутном тесте",kril:"15 дақиқалик тестда сокин ва текис ишлаш"},
+    count:3,
     items:[
-      {uz:"7.1 — Ta'sir masofasi",ru:"7.1 — Расстояние до объекта",kril:"7.1 — Таъсир масофаси"},
-      {uz:"7.2 — Zona uzunligi",ru:"7.2 — Протяжённость зоны",kril:"7.2 — Зона узунлиги"},
-      {uz:"7.3 — Yo'nalish va masofa",ru:"7.3 — Направление и расстояние",kril:"7.3 — Йўналиш ва масофа"},
-      {uz:"7.4 — Transport vositasi turi",ru:"7.4 — Вид транспортного средства",kril:"7.4 — Транспорт воситаси тури"},
-      {uz:"7.5 — Harakat vaqti",ru:"7.5 — Время действия",kril:"7.5 — Ҳаракат вақти"},
-      {uz:"7.6 — Dam olish kunlari",ru:"7.6 — Дни недели",kril:"7.6 — Дам олиш кунлари"},
-    ]
-  },
-  {
-    id:"temporary",
-    icon:"warning2",
-    color:"#F59E0B", bg:"#FEF3C7",
-    title:{uz:"Vaqtinchalik belgilar",ru:"Временные знаки",kril:"Вақтинчалик белгилар"},
-    desc:{uz:"Sariq fonda joylashtirilgan, muvaqqat harakatlanish tartibini belgilovchi belgilar",ru:"Знаки на жёлтом фоне, временно изменяющие порядок движения",kril:"Сариқ фонда жойлаштирилган, муваққат ҳаракатланиш тартибини белгиловчи белгилар"},
-    count:12,
-    items:[
-      {uz:"Sariq fon — vaqtinchalik belgi ekanligini bildiradi",ru:"Жёлтый фон указывает на временный характер знака",kril:"Сариқ фон — вақтинчалик белги эканлигини билдиради"},
-      {uz:"Yo'l ta'miri ishlari paytida qo'llaniladi",ru:"Применяются при дорожных работах",kril:"Йўл таъмири ишлари пайтида қўлланилади"},
-      {uz:"Doimiy belgilar bilan zid bo'lsa, vaqtinchalik belgiga rioya qilish kerak",ru:"При противоречии с постоянными — выполнять временный знак",kril:"Доимий белгилар билан зид бўлса, вақтинчалик белгига риоя қилиш керак"},
-      {uz:"Portativ svetofor doimiy svetofor bilan zid bo'lsa — portativga bo'ysiniladi",ru:"Переносной светофор имеет приоритет над стационарным",kril:"Портатив светофор доимий светофор билан зид бўлса — портативга бўйсинилади"},
-    ]
-  },
-  {
-    id:"service",
-    icon:"hospital",
-    color:"#22C55E", bg:"#DCFCE7",
-    title:{uz:"Xizmat ko'rsatish belgilari",ru:"Знаки сервиса",kril:"Хизмат кўрсатиш белгилари"},
-    desc:{uz:"Xizmat ko'rsatish ob'ektlari joylashgan joyni ko'rsatuvchi belgilar",ru:"Знаки, указывающие расположение объектов сервиса",kril:"Хизмат кўрсатиш объектлари жойлашган жойни кўрсатувчи белгилар"},
-    count:16,
-    items:[
-      {uz:"6.1 — Tibbiy yordam punkti",ru:"6.1 — Пункт медицинской помощи",kril:"6.1 — Тиббий ёрдам пункти"},
-      {uz:"6.3 — Telefon",ru:"6.3 — Телефон",kril:"6.3 — Телефон"},
-      {uz:"6.5 — Yoqilg'i quyish shohobchasi",ru:"6.5 — Автозаправочная станция",kril:"6.5 — Ёқилғи қуйиш шоҳобчаси"},
-      {uz:"6.7 — Texnik xizmat ko'rsatish",ru:"6.7 — Техническое обслуживание",kril:"6.7 — Техник хизмат кўрсатиш"},
-      {uz:"6.9 — Avtomoychma",ru:"6.9 — Мойка автомобилей",kril:"6.9 — Автомойча"},
-      {uz:"6.11 — Oshxona",ru:"6.11 — Пункт питания",kril:"6.11 — Ошхона"},
+      {uz:"Bitta savolga 1 daqiqadan ko'p vaqt sarflamang",ru:"Не тратьте больше минуты на один вопрос",kril:"Битта саволга 1 дақиқадан кўп вақт сарфламанг"},
+      {uz:"Qiyin savolni o'tkazib, keyin qayting",ru:"Пропустите сложный вопрос и вернитесь позже",kril:"Қийин саволни ўтказиб, кейин қайтинг"},
+      {uz:"Juda tez javob berish natijani ishonchsiz qiladi",ru:"Слишком быстрые ответы делают результат ненадёжным",kril:"Жуда тез жавоб бериш натижани ишончсиз қилади"},
     ]
   },
 ];
@@ -3310,7 +3344,7 @@ function RulesScreen({setScreen,T,C,lang,savedQuestions,setSavedQuestions}) {
   };
 
   if(selected!==null){
-    const cat=SIGNS_CATEGORIES[selected];
+    const cat=GUIDE_CATEGORIES[selected];
     return (
       <div style={{minHeight:"100vh",background:C.bg}}>
         {/* Header */}
@@ -3320,7 +3354,7 @@ function RulesScreen({setScreen,T,C,lang,savedQuestions,setSavedQuestions}) {
               style={{width:36,height:36,borderRadius:12,background:"rgba(255,255,255,0.2)",border:"none",cursor:"pointer",display:"flex",alignItems:"center",justifyContent:"center"}}>
               <IC.ArrowLeft size={18} color="white"/>
             </button>
-            <div style={{fontSize:28}}>{cat.icon}</div>
+            <TopicIcon icon={cat.icon} size={26} color="white"/>
             <h2 style={{color:"white",fontSize:18,fontWeight:800,margin:0,flex:1}}>
               {cat.title[lang]||cat.title.uz}
             </h2>
@@ -3329,7 +3363,7 @@ function RulesScreen({setScreen,T,C,lang,savedQuestions,setSavedQuestions}) {
             {cat.desc[lang]||cat.desc.uz}
           </p>
           <div style={{marginTop:12,display:"inline-flex",alignItems:"center",gap:6,background:"rgba(255,255,255,0.2)",borderRadius:20,padding:"5px 12px"}}>
-            <span style={{color:"white",fontSize:12,fontWeight:700}}>{cat.count} ta belgi</span>
+            <span style={{color:"white",fontSize:12,fontWeight:700}}>{cat.count} {T.strategies}</span>
           </div>
         </div>
         {/* Items accordion */}
@@ -3357,7 +3391,7 @@ function RulesScreen({setScreen,T,C,lang,savedQuestions,setSavedQuestions}) {
               {expanded===j&&(
                 <div style={{borderTop:`1px solid ${C.gray200}`,padding:"12px 16px",background:cat.bg+"44"}}>
                   <p style={{margin:0,fontSize:12,color:C.subtext,lineHeight:1.6}}>
-                    {item[lang]||item.uz} — ushbu belgi yo'l harakati ishtirokchilarini tegishli sharoit yoki cheklov haqida xabardor qiladi.
+                    {T.tipHint}
                   </p>
                 </div>
               )}
@@ -3371,26 +3405,26 @@ function RulesScreen({setScreen,T,C,lang,savedQuestions,setSavedQuestions}) {
   // Main categories list
   return (
     <div style={{minHeight:"100vh",background:C.bg}}>
-      <div style={{background:`linear-gradient(135deg,#EC4899,#8B5CF6)`,padding:"52px 20px 24px"}}>
+      <div style={{background:`linear-gradient(135deg,${C.gradStart},${C.gradEnd})`,padding:"52px 20px 24px"}}>
         <h2 style={{color:"white",fontSize:22,fontWeight:800,margin:0}}>{T.rulesTitle}</h2>
         <p style={{color:"rgba(255,255,255,0.7)",fontSize:13,margin:"4px 0 0"}}>{T.rulesSub}</p>
         <div style={{marginTop:12,display:"inline-flex",alignItems:"center",gap:6,background:"rgba(255,255,255,0.15)",borderRadius:20,padding:"5px 14px"}}>
-          <span style={{color:"white",fontSize:12,fontWeight:700}}>8 bo'lim • 180 ta belgi</span>
+          <span style={{color:"white",fontSize:12,fontWeight:700}}>{GUIDE_CATEGORIES.length} {T.sectionsWord} • {GUIDE_CATEGORIES.reduce((n,c)=>n+c.count,0)} {T.strategies}</span>
         </div>
       </div>
       <div style={{padding:16,display:"flex",flexDirection:"column",gap:10}}>
-        {SIGNS_CATEGORIES.map((cat,i)=>(
+        {GUIDE_CATEGORIES.map((cat,i)=>(
           <div key={i} onClick={()=>setSelected(i)}
             style={{background:C.card,borderRadius:18,padding:"16px 18px",display:"flex",alignItems:"center",gap:14,cursor:"pointer",border:`1px solid ${C.cardBorder}`,boxShadow:"0 1px 6px rgba(0,0,0,0.05)",transition:"transform 0.15s"}}>
             <div style={{width:50,height:50,borderRadius:16,background:cat.bg,display:"flex",alignItems:"center",justifyContent:"center",fontSize:24,flexShrink:0}}>
-              {cat.icon}
+              <TopicIcon icon={cat.icon} size={24} color={cat.color}/>
             </div>
             <div style={{flex:1,minWidth:0}}>
               <div style={{fontWeight:700,fontSize:14,color:C.text,marginBottom:3}}>
                 {cat.title[lang]||cat.title.uz}
               </div>
               <div style={{fontSize:11,color:C.subtext,lineHeight:1.4,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis"}}>
-                {cat.count} ta belgi
+                {cat.desc[lang]||cat.desc.uz}
               </div>
             </div>
             <div style={{display:"flex",alignItems:"center",gap:8,flexShrink:0}}>
@@ -3410,6 +3444,7 @@ function RulesScreen({setScreen,T,C,lang,savedQuestions,setSavedQuestions}) {
 // window.Telegram.WebApp orqali Telegram bilan muloqot
 function useTelegram() {
   const tg = typeof window !== "undefined" ? window?.Telegram?.WebApp : null;
+  const dark = tg?.colorScheme === "dark";
 
   useEffect(() => {
     if (!tg) return;
@@ -3420,7 +3455,7 @@ function useTelegram() {
   // Header va background rangini dark/light ga qarab sozlash
   useEffect(() => {
     if (!tg) return;
-    try { tg.setHeaderColor(dark ? "#1E3A5F" : "#1A6BFF"); } catch {}
+    try { tg.setHeaderColor(dark ? "#26224A" : "#4F3FD0"); } catch {}
     try { tg.setBackgroundColor(dark ? "#0F172A" : "#F8FAFC"); } catch {}
   }, [dark, tg]);
 
@@ -3441,7 +3476,7 @@ function useTelegram() {
   };
 
   // Telegram Main button boshqaruvi
-  const showMainButton = (text, onClick, color = "#1A6BFF") => {
+  const showMainButton = (text, onClick, color = "#4F3FD0") => {
     if (!tg) return;
     tg.MainButton.setText(text);
     tg.MainButton.color = color;
@@ -3472,7 +3507,7 @@ function useTelegram() {
   // Backend ga login
   const loginToBackend = async () => {
     const initData = tg?.initData;
-    if (!initData) return null;
+    if (!initData || !API_URL) return null;
     try {
       const res = await apiPost('/auth/telegram', { initData });
       return res;
@@ -3582,7 +3617,7 @@ export default function App() {
         else if (screen === "test-quiz") setScreen("tests");
         else if (screen === "exam-quiz") setScreen("exam");
         else if (screen === "ticket-result") setScreen("tickets");
-        else if (screen === "exam-result" || screen === "exam-fail") setScreen("exam");
+        else if (screen === "exam-result") setScreen("exam");
         else if (screen === "test-result") setScreen("tests");
         else if (screen === "pro") setScreen("profile");
         else if (screen === "notifications") setScreen("home");
@@ -3636,11 +3671,11 @@ export default function App() {
   const handleExamResult = (result) => {
     setExamResult(result);
     const msg = {
-      uz: result.passed ? "Imtihondan o'tdingiz! 🎉" : "Imtihondan o'ta olmadingiz",
-      ru: result.passed ? "Экзамен сдан! 🎉" : "Экзамен не сдан",
-      kril: result.passed ? "Имтиҳондан ўтдингиз! 🎉" : "Имтиҳондан ўта олмадингиз",
+      uz: `IQ test yakunlandi: taxminan ${result.iqLow}–${result.iqHigh}`,
+      ru: `IQ-тест завершён: примерно ${result.iqLow}–${result.iqHigh}`,
+      kril: `IQ тест якунланди: тахминан ${result.iqLow}–${result.iqHigh}`,
     };
-    addToast(msg[lang], result.passed ? "success" : "error");
+    addToast(msg[lang], "info");
     if (notifSettings.result) {
       setNotifs(p => [{ id: Date.now(), type: "result", read: false, time: 0, titleKey: "notifResult", body: msg }, ...p]);
     }
@@ -3659,12 +3694,11 @@ export default function App() {
       case "tests": return <TestsScreen {...props} setScreen={setScreen} user={user} />;
       case "test-quiz": return <TestQuizScreen {...props} setScreen={setScreen} setLastTestResult={setLastTestResult} />;
       case "test-limit-gate": return <ProGate T={T} C={C} setScreen={setScreen} reason="testLimit" onBack={()=>setScreen("tests")}/>;
-      case "test-result": return <ExamResultScreen {...props} setScreen={setScreen} result={lastTestResult ?? { correct: 9, total: 12, wrong: 3, passed: true, percent: 75 }} />;
+      case "test-result": return <PracticeResultScreen {...props} setScreen={setScreen} result={lastTestResult ?? { correct: 9, total: 12 }} />;
       case "exam": return <ExamScreen {...props} setScreen={setScreen} user={user} />;
       case "exam-quiz": return <ExamQuizScreen {...props} setScreen={setScreen} setExamResult={handleExamResult} user={user} />;
       case "exam-limit-gate": return <ProGate T={T} C={C} setScreen={setScreen} reason="examLimit" onBack={()=>setScreen("exam")}/>;
-      case "exam-result": return <ExamResultScreen {...props} setScreen={setScreen} result={examResult ?? { correct: 19, total: 20, wrong: 1, passed: true, percent: 95 }} />;
-      case "exam-fail": return <ExamResultScreen {...props} setScreen={setScreen} result={examResult ?? { correct: 16, total: 20, wrong: 4, passed: false, percent: 80 }} />;
+      case "exam-result": return <ExamResultScreen {...props} setScreen={setScreen} result={examResult ?? iqResult(15, 20)} />;
       case "stats": return <StatsScreen {...props} />;
       case "rating": return <RatingScreen {...props} />;
       case "profile": return <ProfileScreen {...props} setScreen={setScreen} user={user} setUser={setUser} tgUser={tgUser} />;
